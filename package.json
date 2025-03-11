@@ -1,0 +1,51 @@
+{
+  "name": "terra-titan",
+  "version": "0.1.0",
+  "description": "LLM Workflow to convert AWS CDK Constructs to Terraform-CDK",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:integration": "jest --config jest.integration.config.js",
+    "lint": "eslint . --ext .ts",
+    "start": "ts-node src/cli/index.ts",
+    "dev": "ts-node-dev --respawn src/cli/index.ts"
+  },
+  "keywords": [
+    "terraform",
+    "aws-cdk",
+    "cdktf",
+    "llm",
+    "infrastructure-as-code"
+  ],
+  "author": "Charles Martinot and Vincent De Smet",
+  "license": "GPL-3.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.11.0",
+    "@cdktf/provider-aws": "^18.0.0",
+    "@datastax/astra-db-ts": "^0.1.4",
+    "aws-cdk-lib": "^2.110.0",
+    "cdktf": "^0.19.0",
+    "commander": "^11.1.0",
+    "constructs": "^10.3.0",
+    "dotenv": "^16.3.1",
+    "langchain": "^0.0.200"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.0",
+    "@types/jest": "^29.5.10",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.2"
+  },
+  "packageManager": "pnpm@9.15.1+sha512.1acb565e6193efbebda772702950469150cf12bcc764262e7587e71d19dc98a423dff9536e57ea44c49bdf790ff694e83c27be5faa23d67e0c033b583be4bfcf"
+}
