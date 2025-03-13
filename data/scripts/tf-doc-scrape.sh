@@ -9,11 +9,13 @@ BASE_DIR=$(git rev-parse --show-toplevel)/data || {
   exit 1
 }
 WORK_DIR="${BASE_DIR}/reference/docs/provider-aws"
+WORK_TS_DIR="${BASE_DIR}/reference/docs/typescript/provider-aws"
 CACHE_DIR="${BASE_DIR}/cache"
 TARBALL="terraform-provider-aws-${VERSION#v}.tar.gz"
 
 # Create base directories
 mkdir -p "${WORK_DIR}"/{d,r}
+mkdir -p "${WORK_TS_DIR}"/{d,r}
 mkdir -p "${CACHE_DIR}"
 
 echo "Working directory: ${WORK_DIR}"
@@ -62,6 +64,14 @@ if [ ! -d "${DOCS_DIR}" ]; then
   exit 1
 fi
 
+DOCS_TS_DIR="${EXTRACTED_DIR}/website/docs/cdktf/typescript"
+if [ ! -d "${DOCS_TS_DIR}" ]; then
+  echo "Error: TypeScript docs directory not found at ${DOCS_TS_DIR}"
+  echo "Available directories in ${EXTRACTED_DIR}:"
+  find "${EXTRACTED_DIR}" -type d -maxdepth 2
+  exit 1
+fi
+
 # Copy data sources and resources separately
 echo "Copying documentation files..."
 if [ -d "${DOCS_DIR}/d" ]; then
@@ -76,6 +86,18 @@ else
   echo "Warning: Resource docs not found at ${DOCS_DIR}/r"
 fi
 
+# Copy TypeScript docs
+if [ -d "${DOCS_TS_DIR}/d" ]; then
+  cp -rv "${DOCS_TS_DIR}/d/"* "${WORK_TS_DIR}/d/"
+else
+  echo "Warning: TypeScript data sources docs not found at ${DOCS_TS_DIR}/d"
+fi
+if [ -d "${DOCS_TS_DIR}/r" ]; then
+  cp -rv "${DOCS_TS_DIR}/r/"* "${WORK_TS_DIR}/r/"
+else
+  echo "Warning: TypeScript resource docs not found at ${DOCS_TS_DIR}/r"
+fi
+
 # Cleanup
 echo "Cleaning up temporary directory..."
 rm -rf "${TMP_DIR}"
@@ -83,6 +105,10 @@ rm -rf "${TMP_DIR}"
 echo "Documentation copied to:"
 echo " - ${WORK_DIR}/d (Data Sources)"
 echo " - ${WORK_DIR}/r (Resources)"
+
+echo "TypeScript documentation copied to:"
+echo " - ${WORK_TS_DIR}/d (Data Sources)"
+echo " - ${WORK_TS_DIR}/r (Resources)"
 
 # Make the script executable
 chmod +x "${BASE_DIR}/scripts/tf-doc-scrape.sh"

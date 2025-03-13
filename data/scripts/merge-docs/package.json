@@ -1,0 +1,24 @@
+{
+  "name": "merge-docs",
+  "version": "1.0.0",
+  "description": "Merges Terraform documentation into TypeScript declaration files",
+  "main": "index.ts",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "glob": "^8.1.0",
+    "ts-morph": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "@types/bun": "latest",
+    "@types/glob": "^8.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

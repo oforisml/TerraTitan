@@ -9,3 +9,5 @@ This directory contains reference materials for TerraTitan:
   - `terraconstructscore/` - TerraConstruct core utility TypeScript declarations
 - `docs/` - Documentation files
   - `provider-aws/` - Markdown documentation for provider-aws resources
+  - `typescript/provider-aws` - Markdown documentation for `@cdktf/provider-aws`
+- `merged` - docs merged into Typescript declaration files
