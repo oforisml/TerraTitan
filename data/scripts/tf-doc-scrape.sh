@@ -4,7 +4,10 @@ set -euo pipefail
 
 # Configuration
 VERSION="v5.88.0"
-BASE_DIR="/home/vincent/tcons/TerraTitan/data"
+BASE_DIR=$(git rev-parse --show-toplevel)/data || {
+  echo "Error: Script must be run from within a Git repository" >&2
+  exit 1
+}
 WORK_DIR="${BASE_DIR}/reference/docs/provider-aws"
 CACHE_DIR="${BASE_DIR}/cache"
 TARBALL="terraform-provider-aws-${VERSION#v}.tar.gz"
