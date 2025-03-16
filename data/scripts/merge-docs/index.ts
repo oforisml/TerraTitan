@@ -24,7 +24,7 @@ const inputDeclarationFiles = [
   "data/reference/declarations/provider-aws/sns-topic/index.d.ts",
 ];
 // Create output directory
-const outputDir = path.resolve(process.cwd(), "data", "output");
+const outputDir = path.resolve(process.cwd(), "data", "reference", "merged");
 
 interface DocSection {
   title: string;
@@ -32,6 +32,9 @@ interface DocSection {
   items: ListItem[];
   subSections: { title: string; content: string }[];
 }
+
+// TODO: consider remark for markdown parsing
+// https://github.com/changesets/changesets/blob/main/packages/release-utils/src/utils.ts#L5-L6
 
 // Parse markdown into sections
 function parseMarkdown(content: string): DocSection[] {

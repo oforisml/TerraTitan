@@ -1,78 +1,55 @@
 # TerraTitan
 
+> [!WARNING]
+> This repo is Under Construction
+
 <img src="docs/terratitan.webp" alt="TerraTitan Logo" width="300px">
 
 > Convert AWS CDK Constructs to Terraform-CDK using LLM
 
-TerraTitan is an LLM-powered workflow that converts AWS CDK constructs to Terraform CDK (CDKTF). This tool is a major component used to generate the TerraConstructs library, providing reliable and trustworthy infrastructure components for everyone to use.
+TerraTitan is an LLM-powered workflow that converts AWS CDK constructs to Terraform CDK (CDKTF). This tool is a major component used to generate the [TerraConstructs](https://github.com/TerraConstructs/base) library, providing reliable and trustworthy infrastructure components for everyone to use.
 
-## 🌟 Features
+> [!TIP]
+> Currently, we are in data collecting phase to start iteration on LLM Workflows
+
+## Goals
 
 - Automated conversion of AWS CDK constructs to Terraform CDK
-- Vector database for storing and retrieving conversion patterns
-- Unit and integration tests to ensure reliability
-- CLI tool for easy interaction
-- Compatible with both simple and complex AWS constructs
+- Generate code for Unit Tests (+ future: and integration testing to ensure reliability)
+- CLI to manage LLM Code generation workflow
 
-## 🚀 Getting Started
+## Repo Layout
 
-### Prerequisites
-
-- Node.js v22 or later
-- pnpm
-- Anthropic API key
-- DataStax Vector Database credentials
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/TerraTitan.git
-cd TerraTitan
-
-# Install dependencies
-pnpm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys
+```console
+.
+data
+├── reference               # Reference Data for LLM Prompting
+│  ├── declarations         # Typescript declaration files
+│  │  ├── aws-cdk-lib
+│  │  ├── provider-aws
+│  │  └── terraconstructs
+│  ├── docs                 # Terraform Provider Docs (markdown)
+│  │  ├── provider-aws
+│  │  └── typescript
+│  ├── merged               # Typescript declaration merged with Provider Docs
+│  │  └── provider-aws
+│  └── README.md
+├── samples                 # AWS CDK -> CDKTF Sample conversions (few shot prompting + validation)
+│  ├── aws-events
+│  │  ├── connection
+│  │  ├── event-bus
+│  │  ├── event-pattern
+│  │  ├── input
+│  │  └── schedule
+│  ├── aws-kinesis
+│  │  └── stream
+│  └── README.md
+├── scripts                # Scripts to ...
+│  ├── merge-docs          # ... merge Markdown docs into declaration file
+│  ├── tf-doc-scrape.sh    # ... download copy of Terraform Docs (markdown)
+│  └── validate-file       # ... run tsc syntax check on sourceFile
+└── src                    # placeholder for CLI (non functional AI Slop)
 ```
-
-### Usage
-
-```bash
-# Run the CLI
-pnpm start convert --source path/to/awscdk/construct --output path/to/output
-
-# Or use the library in your code
-import { convertConstruct } from 'terra-titan';
-
-const result = await convertConstruct(awscdkConstructPath);
-```
-
-## 🧪 Testing
-
-```bash
-# Run unit tests
-pnpm test
-
-# Run integration tests
-pnpm test:integration
-```
-
-## 🏗️ Architecture
-
-TerraTitan uses a multi-step process to convert AWS CDK constructs:
-
-1. **Parse** - Extract the structure and properties of the AWS CDK construct
-2. **Vectorize** - Create embeddings of the construct for similarity matching
-3. **Match** - Find similar patterns in the vector database
-4. **Generate** - Use Anthropic's Claude to generate the Terraform CDK equivalent
-5. **Validate** - Run tests to ensure the generated code works as expected
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
