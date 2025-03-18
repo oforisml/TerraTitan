@@ -8,7 +8,7 @@ import { OPENAI_MODEL } from "./models";
  *
  * Ref: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
  */
-export function calucateTokens(
+export function calculateTokens(
   model: OPENAI_MODEL,
   ...prompts: string[]
 ): number[] {
@@ -18,10 +18,7 @@ export function calucateTokens(
   return lengths;
 }
 
-export function paddedHumanNumber(
-  num: number | undefined,
-  padding: number = 7
-): string {
+export function forHuman(num: number | undefined, padding: number = 7): string {
   if (num === undefined) {
     return "N/A".padStart(padding, " ");
   }

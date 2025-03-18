@@ -8,7 +8,7 @@ const baseDir = `${__dirname}/../../..`;
  * Samples, relative to data/ folder
  */
 const EXAMPLES: Record<string, ConversionExample> = {
-  // TODO: Auto populate this from the examples folder?
+  // TODO: Auto populate this from the sample folders?
   "aws-events/event-bus/src": {
     // Example AWS CDK TypeScript source code
     inputFile: `${baseDir}/samples/aws-events/event-bus/input/src/event-bus.ts`,

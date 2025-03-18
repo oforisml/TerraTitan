@@ -1,8 +1,8 @@
-# openai-cli
+# OpenAI CLI
 
-Sample CLI using OpenAI models to convert AWSCDK to TerraConstructs.
+PoC CLI using OpenAI models to convert AWSCDK to TerraConstructs.
 
-[OpenAI Changelog](https://platform.openai.com/docs/changelog)
+Refer to [OpenAI Changelog](https://platform.openai.com/docs/changelog) for latest announcements
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ Sample CLI using OpenAI models to convert AWSCDK to TerraConstructs.
 
 1. **Set the BrainTrust API Key:**
 
-   > NOTE: BrainTrust can be used for advanced Evals. See [BrainTrust Evals](#braintrust-evals)
+   > NOTE: BrainTrust is NOT currently used for advanced Evals. See [BrainTrust Evals](#braintrust-evals)
 
 ## Installation
 
@@ -35,6 +35,15 @@ bun install
 
 To run:
 
+>[!TIP]
+> use `--dry-run` to only generate the prompt without making any calls to OpenAI API
+
+```bash
+bun run index.ts --dry-run
+```
+
+Get OpenAI Response:
+
 ```bash
 bun run index.ts
 ```
@@ -45,11 +54,26 @@ This project was created using `bun init` in bun v1.2.5. [Bun](https://bun.sh) i
 
 Start with the [OpenAI Playground](https://platform.openai.com/playground/prompts?models=gpt-4o-mini)
 
-Iterate on the script in `index.ts`.
+Iterate on [instructions-v1.md](./prompts/instructions-v1.md).
+
+Supported Template values:
+
+| placeholder    | description                                                         |
+|----------------|---------------------------------------------------------------------|
+| `{{core}}`       | The TerraConstructs Core module TS declaration files                |
+| `{{aws}}`        | The TerraConstructs AWS module TS declaration files                 |
+| `{{inputRef}}`   | The AWS CDK L1 Generated Constructs (`Cfn...`) TS declaration files |
+| `{{outputRefs}}` | The Terraform Provider AWS TS declaration files (ideally augmented by merging Registry docs into them - see [scripts/merge-docs](../merge-docs/README.md)) |
+| `{{input}}`      | one-shot Conversion Sample Input                                    |
+| `{{output}}`     | one-shot Conversion Sample Output                                   |
+
 
 ## BrainTrust Evals
 
-[BrainTrust Cookbook](https://cookbook.openai.com/examples/custom-llm-as-a-judge)
+> [!NOTE]
+> This is not used yet
+
+Refer to [BrainTrust Cookbook](https://cookbook.openai.com/examples/custom-llm-as-a-judge)
 
 ```
 npx braintrust eval tutorial.eval.ts

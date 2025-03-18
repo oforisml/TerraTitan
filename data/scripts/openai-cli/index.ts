@@ -10,19 +10,16 @@ import ora from "ora";
 import dotenv from "dotenv";
 import type { ConversionRequest } from "./util/types";
 import {
-  calucateTokens,
+  calculateTokens,
   getDateSuffix,
-  paddedHumanNumber,
+  forHuman,
   extractCode,
 } from "./util/helpers";
 import { OPENAI_MODEL, maxOutputTokens, isReasoningModel } from "./util/models";
 import { Sample } from "./util/samples";
+import { LibRef } from "./util/ref";
 // path to data/ directory
 const baseDir = `${__dirname}/../..`;
-
-// const model = OPENAI_MODEL.GPT_4O_MINI;
-const model = OPENAI_MODEL.O3_MINI;
-process.stdout.write(`Selected Model: ${model}\n`);
 
 /**
  * **o-series models only**
@@ -35,7 +32,20 @@ process.stdout.write(`Selected Model: ${model}\n`);
  *
  * The default value is `medium`, which is a balance between speed and reasoning accuracy.
  */
-const reasoningEffort: OpenAI.ReasoningEffort = "medium";
+let reasoningEffort: OpenAI.ReasoningEffort = "medium";
+const args = process.argv.slice(2);
+const isDryRun = args.includes("--dry-run");
+
+if (isDryRun) {
+  process.stdout.write("Running in dry-run mode - no API calls will be made\n");
+}
+
+const model = OPENAI_MODEL.O3_MINI;
+reasoningEffort = "high";
+const modelDescription = isReasoningModel(model)
+  ? `${model} (${reasoningEffort})`
+  : model;
+process.stdout.write(`Selected Model: ${modelDescription}\n`);
 
 const newInputRequest: ConversionRequest = {
   inputFile: `${baseDir}/samples/aws-events/connection/input/src/connection.ts`,
@@ -54,43 +64,23 @@ const expectedFile:
   | undefined = `${baseDir}/samples/aws-events/connection/output/src/connection.ts`;
 
 const sample = Sample.fromName("aws-events/event-bus/src");
+const libRef = LibRef.terraConstructs();
 const newInput = fs.readFileSync(newInputRequest.inputFile, "utf8");
 
+const templatePath = path.join(__dirname, "prompts", "instructions-v1.md");
+const instructionTemplate = fs.readFileSync(templatePath, "utf8");
+
+// TODO: Improve on prompts
 // Ref: https://platform.openai.com/docs/guides/prompt-engineering
-// TODO: Add TerraConstructs core Declaration files
 // TODO: Should the examples be in the system prompt?
-const instructions = [
-  "Convert a given TypeScript code using AWS CDK to CDKTF, following specified guidance and examples.",
-  "Ensure the output is a valid source code file that can be directly written to disk.",
-  "Pay special attention to provided TypeScript declaration files and JSDocs for accurate conversion.\n",
-  "\n## Conversion Guidelines\n\n",
-  " - Use the provided TypeScript declaration files and JSDocs as a primary reference for conversion.\n",
-  " - Follow the provided examples closely to maintain consistency in the conversion process.\n",
-  "## Reference Documents\n\n",
-  "**AWS CDK Type Declarations:**\n",
-  "```typescript\n" + sample.inputRef + "```\n",
-  "\n**CDKTF Type Declarations:**:\n",
-  "```typescript\n" + sample.outputRefs + "```\n",
-  "\n## Steps\n\n",
-  "1. **Review Input**: Examine the provided TypeScript code using AWS CDK Constructs (prefixed with Cfn..).\n",
-  "2. **Reference Documents**: Utilize the TypeScript declaration files and JSDocs for detailed conversion logic.\n",
-  "3. **Convert Syntax**: Translate AWS CDK constructs into their CDKTF equivalents.\n",
-  "4. **Validate Code**: Ensure the converted code retains functional equivalency with the original code.\n",
-  "5. **Output Code**: Prepare the final converted TypeScript source code formatted for CDKTF.\n",
-  "\n## Output Format\n\n",
-  "- Generate a TypeScript source code file (.ts) formatted for CDKTF.\n",
-  "- Ensure the file is syntactically correct and ready for writing to disk.\n",
-  "\n## Examples\n\n",
-  "**Example 1:**\n",
-  "**Input**:\n",
-  "```typescript\n" + sample.input + "\n```\n\n",
-  "**Conversion**:\n",
-  "```typescript\n" + sample.output + "\n```\n\n",
-  "\n## Notes\n\n",
-  "- Ensure all necessary imports and dependencies are correctly referenced for CDKTF.\n",
-  "- Pay attention to any special conversion nuances outlined in the examples, such as specific method or property differences between AWS CDK and CDKTF.\n",
-  "- Leverage existing conversion patterns from provided examples for uniformity in approach.",
-].join("");
+const instructions = instructionTemplate
+  .replace("{{core}}", libRef.core)
+  .replace("{{aws}}", libRef.aws)
+  .replace("{{inputRef}}", sample.inputRef)
+  .replace("{{outputRefs}}", sample.outputRefs)
+  .replace("{{input}}", sample.input)
+  .replace("{{output}}", sample.output);
+
 const userPrompt = [
   "Convert the following TypeScript code using AWS CDK to CDKTF.",
   "```typescript\n" + newInput + "```\n",
@@ -107,34 +97,30 @@ const openai = new OpenAI({
  * Use this to control cost
  */
 const modelMaxTokens = maxOutputTokens(model);
-const [instructionTokens, userPromptTokens] = calucateTokens(
+const [instructionTokens, userPromptTokens] = calculateTokens(
   model,
   instructions,
   userPrompt
 );
 const currentTokens = instructionTokens! + userPromptTokens!;
 const tokenSummaries = [
-  `Instruction Tokens: ${paddedHumanNumber(instructionTokens)}`,
-  `User Prompt Tokens: ${paddedHumanNumber(userPromptTokens)}`,
+  `Instruction Tokens: ${forHuman(instructionTokens)}`,
+  `User Prompt Tokens: ${forHuman(userPromptTokens)}`,
 ];
 // OpenAI recommends reserving at least 25,000
 let expectedOutputTokens = 25_000;
 if (expectedFile) {
   const expectedOutput = fs.readFileSync(expectedFile, "utf8");
   // NOTE: this does not include the tokens consumed by reasoning models...
-  expectedOutputTokens = calucateTokens(model, expectedOutput)[0]!;
+  expectedOutputTokens = calculateTokens(model, expectedOutput)[0]!;
   tokenSummaries.push(
-    `Expected Tokens:    ${paddedHumanNumber(expectedOutputTokens)}\n`
+    `Expected Tokens:    ${forHuman(expectedOutputTokens)}\n`
   );
 }
 tokenSummaries.push(
-  `Total Tokens:       ${paddedHumanNumber(
-    currentTokens + expectedOutputTokens
-  )}`
+  `Total Tokens:       ${forHuman(currentTokens + expectedOutputTokens)}`
 );
-tokenSummaries.push(
-  `Model Max Tokens:   ${paddedHumanNumber(modelMaxTokens)}\n`
-);
+tokenSummaries.push(`Model Max Tokens:   ${forHuman(modelMaxTokens)}\n`);
 
 process.stdout.write(tokenSummaries.join("\n"));
 if (currentTokens + expectedOutputTokens > modelMaxTokens) {
@@ -148,6 +134,15 @@ if (currentTokens + expectedOutputTokens > modelMaxTokens) {
   // throw new Error(
   //   `This prompt is likely to exceed the maximum tokens allowed for the model.`
   // );
+}
+
+if (isDryRun) {
+  process.stdout.write("Dry-run mode - skipping API call\n");
+  // write the prompt to a file
+  const promptFile = `./responses/prompt-${getDateSuffix()}.md`;
+  fs.writeFileSync(promptFile, instructions + "\n" + userPrompt, "utf8");
+  process.stdout.write(`Prompt saved to: ${promptFile}\n`);
+  process.exit(0);
 }
 
 /**
@@ -232,7 +227,7 @@ fs.mkdirSync(outputDir, { recursive: true });
 
 const result = [
   "# Conversion Response\n",
-  `Selected Model: [${model}](https://platform.openai.com/docs/models/${model})\n`,
+  `Selected Model: [${modelDescription}](https://platform.openai.com/docs/models/${model})\n`,
   "## Metadata\n",
   "### Token Summary",
   "```",
