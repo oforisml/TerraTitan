@@ -1,3 +1,4 @@
+import path from "path";
 import { encoding_for_model } from "tiktoken";
 import { OPENAI_MODEL } from "./models";
 
@@ -16,6 +17,23 @@ export function calculateTokens(
   const lengths = prompts.map((p) => enc.encode(p).length);
   enc.free();
   return lengths;
+}
+
+/**
+ * Get the base name of a typescript declaration file
+ */
+export function dtsBaseName(file: string): string {
+  return path.basename(file, ".d.ts");
+}
+
+/**
+ * Get the base name of a CDKTF ref file:
+ *
+ * for example:
+ * "data/constructs/index.d.ts" => "constructs"
+ */
+export function cdktfBaseName(file: string): string {
+  return path.basename(path.dirname(file));
 }
 
 export function forHuman(num: number | undefined, padding: number = 7): string {

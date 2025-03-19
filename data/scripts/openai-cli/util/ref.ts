@@ -1,4 +1,5 @@
 import fs from "fs";
+import { dtsBaseName } from "./helpers";
 // path to data/ directory
 const baseDir = `${__dirname}/../../..`;
 
@@ -48,16 +49,12 @@ export class LibRef {
 
   get core() {
     return this.refData.coreRefFiles
-      .map((f) => `// ../../${baseName(f)}\n` + fs.readFileSync(f, "utf8"))
+      .map((f) => `// ../../${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
       .join("\n\n");
   }
   get aws() {
     return this.refData.awsRefFiles
-      .map((f) => `// ../${baseName(f)}\n` + fs.readFileSync(f, "utf8"))
+      .map((f) => `// ../${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
       .join("\n\n");
   }
-}
-
-function baseName(file: string): string {
-  return file.split("/").pop()!;
 }

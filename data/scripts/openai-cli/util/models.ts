@@ -31,7 +31,9 @@ export enum OPENAI_MODEL {
    */
   O3_MINI = "o3-mini",
   /**
-   * Reasoning, same as o3-mini? no idea what the date represents... (cut off date?)
+   * o3-mini model with a snapshot pin
+   *
+   * This is a snapshot pin if you want to ensure using the same model in the future
    */
   O3_MINI_20250131 = "o3-mini-2025-01-31",
   /**
@@ -48,7 +50,9 @@ export enum OPENAI_MODEL {
    */
   O1 = "o1",
   /**
-   * Reasoning, not sure what the date represents...
+   * o1 model with a snapshot pin
+   *
+   * This is a snapshot pin if you want to ensure using the same model in the future
    */
   O1_20241217 = "o1-2024-12-17",
   // O1_PREVIEW = "o1-preview", // Not supported in Response API

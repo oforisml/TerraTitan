@@ -8,7 +8,6 @@ import fs from "fs";
 import OpenAI from "openai/index.mjs";
 import ora from "ora";
 import dotenv from "dotenv";
-import type { ConversionRequest } from "./util/types";
 import {
   calculateTokens,
   getDateSuffix,
@@ -16,8 +15,10 @@ import {
   extractCode,
 } from "./util/helpers";
 import { OPENAI_MODEL, maxOutputTokens, isReasoningModel } from "./util/models";
+import { Message } from "./prompts";
 import { Sample } from "./util/samples";
 import { LibRef } from "./util/ref";
+import { ConversionRequest } from "./util/request";
 // path to data/ directory
 const baseDir = `${__dirname}/../..`;
 
@@ -47,7 +48,38 @@ const modelDescription = isReasoningModel(model)
   : model;
 process.stdout.write(`Selected Model: ${modelDescription}\n`);
 
-const newInputRequest: ConversionRequest = {
+// get prepared sample data and TerraConstructs Library references
+const sample1 = Sample.fromName("aws-events/event-bus/src");
+const sample2 = Sample.fromName("aws-kinesis/stream/src");
+const libRef = LibRef.terraConstructs();
+
+// TODO: Improve on the actual prompts
+// Ref: https://platform.openai.com/docs/guides/prompt-engineering
+const instructions = Message.instructions.render({
+  core: libRef.core,
+  aws: libRef.aws,
+  // TODO: Should the examples be in the system prompt?
+  sampleInputRef: sample1.inputRef,
+  sampleOutputRefs: sample1.outputRefs,
+  sampleInput: sample1.input,
+  sampleOutput: sample1.output,
+});
+
+// simulate 1 previous conversation for the model to follow
+const sampleInputRequest = sample2.toSampleRequest();
+const userPrompt = Message.user;
+const sampleInput = userPrompt.render({
+  input: sampleInputRequest.input,
+  inputRef: sampleInputRequest.inputRef,
+  outputRefs: sampleInputRequest.outputRefs,
+});
+const assistantSample = Message.assistantSample;
+const sampleResponse = assistantSample.render({
+  output: sample2.output,
+});
+
+// Create a new Conversion Request
+const newInputRequest = new ConversionRequest({
   inputFile: `${baseDir}/samples/aws-events/connection/input/src/connection.ts`,
   // TODO: Filter down to just the relevant classes/interfaces?
   inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-events/lib/events.generated.d.ts`,
@@ -55,41 +87,17 @@ const newInputRequest: ConversionRequest = {
     // Note: created by running bun scripts/merge-docs/index.ts!
     `${baseDir}/reference/merged/provider-aws/cloudwatch-event-connection/index.d.ts`,
   ],
+  // For token estimates...
+  expectedFile: `${baseDir}/samples/aws-events/connection/output/src/connection.ts`,
   responseFile: `./responses/connection-response-${getDateSuffix()}.md`,
-};
-
-// For token estimates... TODO: automated Evals (or use BrainTrust)?
-const expectedFile:
-  | string
-  | undefined = `${baseDir}/samples/aws-events/connection/output/src/connection.ts`;
-
-const sample = Sample.fromName("aws-events/event-bus/src");
-const libRef = LibRef.terraConstructs();
-const newInput = fs.readFileSync(newInputRequest.inputFile, "utf8");
-
-const templatePath = path.join(__dirname, "prompts", "instructions-v1.md");
-const instructionTemplate = fs.readFileSync(templatePath, "utf8");
-
-// TODO: Improve on prompts
-// Ref: https://platform.openai.com/docs/guides/prompt-engineering
-// TODO: Should the examples be in the system prompt?
-const instructions = instructionTemplate
-  .replace("{{core}}", libRef.core)
-  .replace("{{aws}}", libRef.aws)
-  .replace("{{inputRef}}", sample.inputRef)
-  .replace("{{outputRefs}}", sample.outputRefs)
-  .replace("{{input}}", sample.input)
-  .replace("{{output}}", sample.output);
-
-const userPrompt = [
-  "Convert the following TypeScript code using AWS CDK to CDKTF.",
-  "```typescript\n" + newInput + "```\n",
-].join();
-
-dotenv.config();
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
 });
+const newInput = userPrompt.render({
+  input: newInputRequest.input,
+  inputRef: newInputRequest.inputRef,
+  outputRefs: newInputRequest.outputRefs,
+});
+
+/// TOKEN CALCULATIONS
 
 /**
  * The Maximum Tokens before Cut-off
@@ -97,33 +105,89 @@ const openai = new OpenAI({
  * Use this to control cost
  */
 const modelMaxTokens = maxOutputTokens(model);
-const [instructionTokens, userPromptTokens] = calculateTokens(
-  model,
-  instructions,
-  userPrompt
-);
-const currentTokens = instructionTokens! + userPromptTokens!;
+const [
+  instructionTokens,
+  // simulated interaction
+  user1InputTokens,
+  assistant1OutpuTokens,
+  // new request
+  newRequestTokens,
+] = calculateTokens(model, instructions, sampleInput, sampleResponse, newInput);
+// keep track of how many tokens this simulation already uses
+const currentTokens =
+  instructionTokens! +
+  newRequestTokens! +
+  user1InputTokens! +
+  assistant1OutpuTokens!;
+
 const tokenSummaries = [
-  `Instruction Tokens: ${forHuman(instructionTokens)}`,
-  `User Prompt Tokens: ${forHuman(userPromptTokens)}`,
+  `Instruction Tokens:                  ${forHuman(instructionTokens)}`,
+  `Simulated User Prompt Tokens:        ${forHuman(user1InputTokens)}`,
+  `Simulated Assistent Response Tokens: ${forHuman(assistant1OutpuTokens)}`,
+  `New User Prompt Tokens:              ${forHuman(newRequestTokens)}`,
 ];
-// OpenAI recommends reserving at least 25,000
+
+// OpenAI recommends reserving at least 25,000 (for reasoning and output generation)
 let expectedOutputTokens = 25_000;
-if (expectedFile) {
-  const expectedOutput = fs.readFileSync(expectedFile, "utf8");
-  // NOTE: this does not include the tokens consumed by reasoning models...
-  expectedOutputTokens = calculateTokens(model, expectedOutput)[0]!;
+if (newInputRequest.expected) {
+  // caluclate a conservative estimate of the expected token usage
+  expectedOutputTokens = calculateTokens(model, newInputRequest.expected)[0]!;
+  if (isReasoningModel(model)) {
+    // also reserve 5,000 tokens for reasoning
+    expectedOutputTokens += 5_000;
+  }
   tokenSummaries.push(
-    `Expected Tokens:    ${forHuman(expectedOutputTokens)}\n`
+    `Expected Tokens:                     ${forHuman(expectedOutputTokens)}\n`
   );
 }
 tokenSummaries.push(
-  `Total Tokens:       ${forHuman(currentTokens + expectedOutputTokens)}`
+  `Total Tokens:                        ${forHuman(
+    currentTokens + expectedOutputTokens
+  )}`
 );
-tokenSummaries.push(`Model Max Tokens:   ${forHuman(modelMaxTokens)}\n`);
+tokenSummaries.push(
+  `Model Max Tokens:                    ${forHuman(modelMaxTokens)}\n`
+);
 
 process.stdout.write(tokenSummaries.join("\n"));
-if (currentTokens + expectedOutputTokens > modelMaxTokens) {
+const likelyExceedsMaxTokens =
+  currentTokens + expectedOutputTokens > modelMaxTokens;
+
+if (isDryRun) {
+  process.stdout.write("Dry-run mode - skipping API call\n");
+  // write the dry-run prompt to a file for review
+  const promptFile = `./responses/prompt-${getDateSuffix()}.md`;
+  fs.writeFileSync(
+    promptFile,
+    [
+      "# Dry-run Prompt",
+      "## Metadata",
+      "### Token Summary",
+      "```",
+      tokenSummaries.join("\n"),
+      "```",
+      "## Instructions",
+      instructions,
+      "## Simulated User Prompt",
+      sampleInput,
+      "## Simulated Assistant Response",
+      sampleResponse,
+      "## New User Prompt",
+      newInput,
+    ].join("\n"),
+    "utf8"
+  );
+  if (likelyExceedsMaxTokens) {
+    process.stdout.write(
+      `\nERROR: This prompt is likely to exceed the maximum tokens allowed for the model.\n`
+    );
+  }
+  process.stdout.write(`Prompt saved to: ${promptFile}\n`);
+  process.exit(0);
+}
+
+// Exit if the prompt is likely to exceed the maximum tokens allowed for the model
+if (likelyExceedsMaxTokens) {
   process.stdout.write(
     `\nError: This prompt is likely to exceed the maximum tokens allowed for the model.\n`
   );
@@ -131,20 +195,14 @@ if (currentTokens + expectedOutputTokens > modelMaxTokens) {
     `Please revise the prompts, compress the inputs or use a model with a higher token limit.\n`
   );
   process.exit(1);
-  // throw new Error(
-  //   `This prompt is likely to exceed the maximum tokens allowed for the model.`
-  // );
 }
 
-if (isDryRun) {
-  process.stdout.write("Dry-run mode - skipping API call\n");
-  // write the prompt to a file
-  const promptFile = `./responses/prompt-${getDateSuffix()}.md`;
-  fs.writeFileSync(promptFile, instructions + "\n" + userPrompt, "utf8");
-  process.stdout.write(`Prompt saved to: ${promptFile}\n`);
-  process.exit(0);
-}
+/// ACTUAL OPENAI API CALL
 
+dotenv.config();
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 /**
  * OpenAI roles
  *
@@ -159,19 +217,42 @@ if (isDryRun) {
  * See: https://model-spec.openai.com/2025-02-12.html#chain_of_command
  */
 
-const inputFileName = path.relative(process.cwd(), newInputRequest.inputFile);
-const spinner = ora(`Converting ${inputFileName}`).start();
+const spinner = ora(`Converting ${newInputRequest.inputFileName}`).start();
 const startTime = performance.now();
 const response = await openai.responses.create({
   model,
   instructions,
   input: [
+    // simulate a user interaction for the model to follow
     {
       role: "user",
       content: [
         {
           type: "input_text",
-          text: userPrompt,
+          text: sampleInput,
+        },
+      ],
+    },
+    {
+      // id: "", // specifying an invalid ID causes an API Error :(
+      status: "completed",
+      type: "message",
+      role: "assistant",
+      content: [
+        {
+          type: "output_text",
+          text: sampleResponse,
+          annotations: [],
+        },
+      ],
+    } as any, // ignore annoying typescript error on missing "id" field...
+    // now prompt the new input
+    {
+      role: "user",
+      content: [
+        {
+          type: "input_text",
+          text: newInput,
         },
       ],
     },

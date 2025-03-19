@@ -7,11 +7,11 @@ Pay special attention to provided TypeScript declaration files and JSDocs for ac
 - Use the provided TypeScript declaration files and JSDocs as a primary reference for conversion.
 - Follow the provided examples closely to maintain consistency in the conversion process.
 - Use all the TerraConstruct AWS Specific constructs for the conversion and pay extra attention to:
-  - Extend the abstract AwsConstructBase class where the AWS CDK extends the Construct class
+  - Extend the abstract AwsConstructBase class where the AWS CDK extends the Resource class
   - Make sure the Constructor Props also extend the AwsConstructProps Interface
   - Provide an implementation for the abstract outputs getter exposing primitive AWS CDK Construct Interface attributes
   - Make use of the AwsStack utility attributes to closely match AWS CDK Stack behaviour
-- Highlight ContextProvider usage as pending implemention with comments and do NOT implement ContextProvider Lookups
+- Highlight ContextProvider usage as pending implementation with comments and do NOT implement ContextProvider Lookups
 - Assume following modules already exist in TerraConstructs under following names with identical implementations to AWS CDK:
   - "aws-kms" -> "encryption"
   - "aws-cloudwatch" -> "cloudwatch"
@@ -32,16 +32,6 @@ Pay special attention to provided TypeScript declaration files and JSDocs for ac
 {{aws}}
 ```
 
-**AWS CDK Type Declarations:**
-```typescript
-{{inputRef}}
-```
-
-**CDKTF Type Declarations:**:
-```typescript
-{{outputRefs}}
-```
-
 ## Steps
 
 1. **Review Input**: Examine the provided TypeScript code using AWS CDK Constructs (prefixed with Cfn..).
@@ -60,12 +50,24 @@ Pay special attention to provided TypeScript declaration files and JSDocs for ac
 **Example 1:**
 **Input**:
 ```typescript
-{{input}}
+{{sampleInput}}
+```
+
+**CDKTF Type Declarations:**:
+Strictly adhere to the following type declarations for relevant CDKTF Resources:
+```typescript
+{{sampleOutputRefs}}
+```
+
+**AWS CDK Type Declarations:**
+Refer to the following Reference declarations used by the AWSCDK constructs:
+```typescript
+{{sampleInputRef}}
 ```
 
 **Conversion**:
 ```typescript
-{{output}}
+{{sampleOutput}}
 ```
 
 ## Notes

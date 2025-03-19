@@ -52,21 +52,15 @@ This project was created using `bun init` in bun v1.2.5. [Bun](https://bun.sh) i
 
 ## Prompt iteration
 
-Start with the [OpenAI Playground](https://platform.openai.com/playground/prompts?models=gpt-4o-mini)
+Start with the [OpenAI Playground](https://platform.openai.com/playground/prompts?models=gpt-4o-mini) and use the `code <>` button to get a sample SDK Request.
 
-Iterate on [instructions-v1.md](./prompts/instructions-v1.md).
+Iterate on templates:
 
-Supported Template values:
+- [instructions-v1.md](./prompts/instructions-v1.md)
+- [user-prompt-v1.md](./prompts/user-prompt-v1.md)
+- [assistant-sample-v1.md](./prompts/assistant-sample-v1.md)
 
-| placeholder    | description                                                         |
-|----------------|---------------------------------------------------------------------|
-| `{{core}}`       | The TerraConstructs Core module TS declaration files                |
-| `{{aws}}`        | The TerraConstructs AWS module TS declaration files                 |
-| `{{inputRef}}`   | The AWS CDK L1 Generated Constructs (`Cfn...`) TS declaration files |
-| `{{outputRefs}}` | The Terraform Provider AWS TS declaration files (ideally augmented by merging Registry docs into them - see [scripts/merge-docs](../merge-docs/README.md)) |
-| `{{input}}`      | one-shot Conversion Sample Input                                    |
-| `{{output}}`     | one-shot Conversion Sample Output                                   |
-
+Supported Template values - see [prompts/index.ts](./prompts/index.ts).
 
 ## BrainTrust Evals
 

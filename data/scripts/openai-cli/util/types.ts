@@ -1,7 +1,7 @@
 /**
  * A new Conversion Request
  */
-export interface ConversionRequest {
+export interface ConversionRequestProps {
   /**
    * The AWS CDK file to convert
    */
@@ -18,6 +18,11 @@ export interface ConversionRequest {
    * The file to write the output to
    */
   responseFile: string;
+
+  /**
+   * If this is a test, the expected output file
+   */
+  expectedFile?: string;
 }
 
 /**

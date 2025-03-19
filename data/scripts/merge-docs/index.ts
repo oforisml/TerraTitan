@@ -15,11 +15,12 @@ const inputMarkdownFiles = [
   // "data/reference/docs/typescript/provider-aws/r/sns_topic_policy.html.markdown",
   // "data/reference/docs/typescript/provider-aws/r/sns_topic_subscription.html.markdown",
   // "data/reference/docs/typescript/provider-aws/r/sns_topic.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_bus.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_bus_policy.html.markdown",
-  // NOTE: This markdown is not very structured...
-  "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_connection.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_permission.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_bus.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_bus_policy.html.markdown",
+  // // NOTE: cloudwatch_event_connection markdown structure causes a lot of errors
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_connection.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_permission.html.markdown",
+  "data/reference/docs/typescript/provider-aws/r/kinesis_stream.html.markdown",
 ];
 const inputDeclarationFiles = [
   // "data/reference/declarations/provider-aws/ami/index.d.ts",
@@ -27,10 +28,11 @@ const inputDeclarationFiles = [
   // "data/reference/declarations/provider-aws/sns-topic-policy/index.d.ts",
   // "data/reference/declarations/provider-aws/sns-topic-subscription/index.d.ts",
   // "data/reference/declarations/provider-aws/sns-topic/index.d.ts",
-  "data/reference/declarations/provider-aws/cloudwatch-event-bus/index.d.ts",
-  "data/reference/declarations/provider-aws/cloudwatch-event-bus-policy/index.d.ts",
-  "data/reference/declarations/provider-aws/cloudwatch-event-connection/index.d.ts",
-  "data/reference/declarations/provider-aws/cloudwatch-event-permission/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-bus/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-bus-policy/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-connection/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-permission/index.d.ts",
+  "data/reference/declarations/provider-aws/kinesis-stream/index.d.ts",
 ];
 // Create output directory
 const outputDir = path.resolve(process.cwd(), "data", "reference", "merged");
