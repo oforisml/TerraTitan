@@ -456,12 +456,14 @@ export namespace Connection {
 }
 ```
 ────────────────────────────
+
 Notes:
-• The abstract classes Authorization and HttpParameter use an internal “_bind()” and “_render()” method to return
+
+* The abstract classes Authorization and HttpParameter use an internal “_bind()” and “_render()” method to return
   objects with the exact shape expected by CloudwatchEventConnection.AuthParametersProperty and .ParameterProperty.
-• The Connection construct extends the TerraConstruct base class (AwsConstructBase) and uses AwsStack utilities
+* The Connection construct extends the TerraConstruct base class (AwsConstructBase) and uses AwsStack utilities
   to parse ARNs and generate unique names.
-• The CloudwatchEventConnection resource is assumed to provide attribute getters “attrArn” and “attrSecretArn.”
-• You may need to adjust import paths and module names according to your local TerraConstruct project structure.
+* The CloudwatchEventConnection resource is assumed to provide attribute getters “attrArn” and “attrSecretArn.”
+* You may need to adjust import paths and module names according to your local TerraConstruct project structure.
 
 This file should be saved as a .ts file and is syntactically valid and ready to be written to disk.
