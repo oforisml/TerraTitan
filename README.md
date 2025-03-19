@@ -12,6 +12,8 @@ TerraTitan is an LLM-powered workflow that converts AWS CDK constructs to Terraf
 > [!TIP]
 > Currently, we are in data collecting phase to start iteration on LLM Workflows
 
+You probably want to iterate on the [OpenAI Script](./data/scripts/openai-cli/README.md).
+
 ## Goals
 
 - Automated conversion of AWS CDK constructs to Terraform CDK
@@ -46,9 +48,10 @@ data
 │  └── README.md
 ├── scripts                # Scripts to ...
 │  ├── merge-docs          # ... merge Markdown docs into declaration file
+│  ├── openai-cli          # ... PoC OpenAI prompts
 │  ├── tf-doc-scrape.sh    # ... download copy of Terraform Docs (markdown)
 │  └── validate-file       # ... run tsc syntax check on sourceFile
-└── src                    # placeholder for CLI (non functional AI Slop)
+└── src                    # <<<< IGNORE THIS RIGHT NOW
 ```
 
 ## 📄 License
