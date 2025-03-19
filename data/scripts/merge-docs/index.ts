@@ -10,18 +10,29 @@ import {
 } from "ts-morph";
 
 const inputMarkdownFiles = [
-  "data/reference/docs/typescript/provider-aws/r/ami.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/sns_topic_data_protection_policy.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/sns_topic_policy.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/sns_topic_subscription.html.markdown",
-  "data/reference/docs/typescript/provider-aws/r/sns_topic.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/ami.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/sns_topic_data_protection_policy.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/sns_topic_policy.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/sns_topic_subscription.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/sns_topic.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_bus.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_bus_policy.html.markdown",
+  // // NOTE: cloudwatch_event_connection markdown structure causes a lot of errors
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_connection.html.markdown",
+  // "data/reference/docs/typescript/provider-aws/r/cloudwatch_event_permission.html.markdown",
+  "data/reference/docs/typescript/provider-aws/r/kinesis_stream.html.markdown",
 ];
 const inputDeclarationFiles = [
-  "data/reference/declarations/provider-aws/ami/index.d.ts",
-  "data/reference/declarations/provider-aws/sns-topic-data-protection-policy/index.d.ts",
-  "data/reference/declarations/provider-aws/sns-topic-policy/index.d.ts",
-  "data/reference/declarations/provider-aws/sns-topic-subscription/index.d.ts",
-  "data/reference/declarations/provider-aws/sns-topic/index.d.ts",
+  // "data/reference/declarations/provider-aws/ami/index.d.ts",
+  // "data/reference/declarations/provider-aws/sns-topic-data-protection-policy/index.d.ts",
+  // "data/reference/declarations/provider-aws/sns-topic-policy/index.d.ts",
+  // "data/reference/declarations/provider-aws/sns-topic-subscription/index.d.ts",
+  // "data/reference/declarations/provider-aws/sns-topic/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-bus/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-bus-policy/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-connection/index.d.ts",
+  // "data/reference/declarations/provider-aws/cloudwatch-event-permission/index.d.ts",
+  "data/reference/declarations/provider-aws/kinesis-stream/index.d.ts",
 ];
 // Create output directory
 const outputDir = path.resolve(process.cwd(), "data", "reference", "merged");
@@ -103,6 +114,33 @@ function parseListItems(content: string, sectionTitle: string): ListItem[] {
       /^\s*When\s*`([^`]+)`\s*is\s*"([^"]+)".*$/
     );
 
+    const headerBlockMatch = line.match(/^###\s+(.+)$/);
+    if (headerBlockMatch) {
+      const blockName = headerBlockMatch[1]!.trim().toLowerCase();
+      // Check if this block name exists as a nested block in our existing items
+      const existingBlock = items.find(
+        (item) => item.isNestedBlock && item.name.toLowerCase() === blockName
+      );
+      if (existingBlock) {
+        nextParentBlock = blockName;
+        currentCondition = undefined;
+        continue;
+      }
+    }
+    const headerBlockMatch2 = line.match(/^`(.+)`.*support the following/);
+    if (headerBlockMatch2) {
+      const blockName = headerBlockMatch2[1]!.trim().toLowerCase();
+      // Check if this block name exists as a nested block in our existing items
+      const existingBlock = items.find(
+        (item) => item.isNestedBlock && item.name.toLowerCase() === blockName
+      );
+      if (existingBlock) {
+        nextParentBlock = blockName;
+        currentCondition = undefined;
+        continue;
+      }
+    }
+
     if (nestedBlockMatch) {
       // set parent block for next items
       nextParentBlock = nestedBlockMatch[1]!.trim();
@@ -115,9 +153,12 @@ function parseListItems(content: string, sectionTitle: string): ListItem[] {
       // Save previous item if exists
       if (currentItem && currentItem.name) {
         const description = currentDescription.join(" ").trim();
-        const isNestedBlock = description.includes(
-          "The structure of this block is described below"
-        );
+        const isNestedBlock =
+          description.includes(
+            "The structure of this block is described below"
+          ) ||
+          description.includes("Specified below") ||
+          description.includes("Documented below");
         items.push({
           name: currentItem.name,
           description,
@@ -148,9 +189,10 @@ function parseListItems(content: string, sectionTitle: string): ListItem[] {
   // Don't forget to add the last item
   if (currentItem && currentItem.name) {
     const description = currentDescription.join(" ").trim();
-    const isNestedBlock = description.includes(
-      "The structure of this block is described below"
-    );
+    const isNestedBlock =
+      description.includes("The structure of this block is described below") ||
+      description.includes("Specified below") ||
+      description.includes("Documented below");
     items.push({
       name: currentItem.name,
       description,
@@ -254,6 +296,17 @@ async function processFilePair(
   // Ensure output directory exists
   const outputFileDir = path.dirname(outputFilePath);
   fs.mkdirSync(outputFileDir, { recursive: true });
+
+  // // Get only the interface and function declarations text
+  // const interfaceTexts = interfaces.map((intf) => intf.getText()).join("\n");
+  // const functionTexts = sourceFile
+  //   .getFunctions()
+  //   .map((fn) => fn.getText())
+  //   .join("\n");
+  // const outputText = [interfaceTexts, functionTexts]
+  //   .filter(Boolean)
+  //   .join("\n\n");
+  // fs.writeFileSync(outputFilePath, outputText);
 
   // Save the file to the output location
   fs.writeFileSync(outputFilePath, sourceFile.getFullText());
