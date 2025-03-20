@@ -1,5 +1,6 @@
 import fs from "fs";
-import type { ConversionExample } from "./types";
+import path from "path";
+import { ConversionType, type ConversionExample } from "./types";
 import { cdktfBaseName } from "./helpers";
 import { ConversionRequest } from "./request";
 import { findGeneratedImports, filterGeneratedModule } from "../retrieval";
@@ -13,9 +14,9 @@ const baseDir = `${__dirname}/../../..`;
 const EXAMPLES: Record<string, ConversionExample> = {
   // TODO: Auto populate this from the sample folders?
   "aws-events/event-bus/src": {
+    type: ConversionType.SOURCE,
     // Example AWS CDK TypeScript source code
     inputFile: `${baseDir}/samples/aws-events/event-bus/input/src/event-bus.ts`,
-    // TODO: Filter down to just the relevant classes/interfaces?
     inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-events/lib/events.generated.d.ts`,
 
     // Example CDKTF Source code output
@@ -29,21 +30,23 @@ const EXAMPLES: Record<string, ConversionExample> = {
     ],
   },
   "aws-events/event-bus/test": {
+    type: ConversionType.UNIT,
     inputFile: `${baseDir}/samples/aws-events/event-bus/input/test/event-bus.test.ts`,
-    // TODO: Filter this down to just the relevant parts?
-    inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-events/lib/events.generated.d.ts`,
+    inputRefFile: `${baseDir}/samples/aws-events/event-bus/input/declarations/event-bus.d.ts`,
 
     // Example CDKTF Source code output
     outputFile: `${baseDir}/samples/aws-events/event-bus/output/test/event-bus.test.ts`,
     // created by running bun scripts/merge-docs/index.ts
     // CDKTF Declaration merged with terraform-provider-aws Markdown docs
     outputRefFiles: [
-      `${baseDir}/reference/merged/provider-aws/cloudwatch-event-bus/index.d.ts`,
-      `${baseDir}/reference/merged/provider-aws/cloudwatch-event-bus-policy/index.d.ts`,
-      `${baseDir}/reference/merged/provider-aws/cloudwatch-event-permission/index.d.ts`,
+      // Unit Tests use Terraform HCL Markdown docs as attributes reference
+      `${baseDir}/reference/docs/provider-aws/r/cloudwatch_event_bus.html.markdown`,
+      `${baseDir}/reference/docs/provider-aws/r/cloudwatch_event_bus_policy.html.markdown`,
+      `${baseDir}/reference/docs/provider-aws/r/cloudwatch_event_permission.html.markdown`,
     ],
   },
   "aws-kinesis/stream/src": {
+    type: ConversionType.SOURCE,
     inputFile: `${baseDir}/samples/aws-kinesis/stream/input/src/stream.ts`,
     inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-kinesis/lib/kinesis.generated.d.ts`,
     outputFile: `${baseDir}/samples/aws-kinesis/stream/output/src/kinesis-stream.ts`,
@@ -54,13 +57,13 @@ const EXAMPLES: Record<string, ConversionExample> = {
     ],
   },
   "aws-kinesis/stream/test": {
+    type: ConversionType.UNIT,
     inputFile: `${baseDir}/samples/aws-kinesis/stream/input/test/stream.test.ts`,
-    inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-kinesis/lib/kinesis.generated.d.ts`,
-    outputFile: `${baseDir}/samples/aws-kinesis/stream/output/src/kinesis-stream.test.ts`,
+    inputRefFile: `${baseDir}/samples/aws-kinesis/stream/input/declarations/stream.d.ts`,
+    outputFile: `${baseDir}/samples/aws-kinesis/stream/output/test/kinesis-stream.test.ts`,
     outputRefFiles: [
-      // created by running bun scripts/merge-docs/index.ts
-      // CDKTF Declaration merged with terraform-provider-aws Markdown docs
-      `${baseDir}/reference/merged/provider-aws/kinesis-stream/index.d.ts`,
+      // Unit Tests use Terraform HCL Markdown docs as attributes reference
+      `${baseDir}/reference/docs/provider-aws/r/kinesis_stream.html.markdown`,
     ],
   },
 };
@@ -99,6 +102,10 @@ export class Sample {
       return this._inputRef;
     }
     const inputRefSource = fs.readFileSync(this.example.inputRefFile, "utf8");
+    if (this.example.type === ConversionType.UNIT) {
+      this._inputRef = inputRefSource; // No filtering for unit tests for now
+      return this._inputRef;
+    }
     this._inputRef = filterInputRefFile(this.input, inputRefSource);
     return this._inputRef;
   }
@@ -107,12 +114,20 @@ export class Sample {
       return this._outputRefs;
     }
     this._outputRefs = this.example.outputRefFiles
-      .map((f) => `// ${cdktfBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
+      .map(
+        (f) =>
+          `// ${
+            this.example.type === ConversionType.SOURCE
+              ? cdktfBaseName(f)
+              : path.basename(f)
+          }\n` + fs.readFileSync(f, "utf8")
+      )
       .join("\n\n");
     return this._outputRefs;
   }
   toSampleRequest(): ConversionRequest {
     return new ConversionRequest({
+      type: this.example.type,
       inputFile: this.example.inputFile,
       inputRefFile: this.example.inputRefFile,
       outputRefFiles: this.example.outputRefFiles,

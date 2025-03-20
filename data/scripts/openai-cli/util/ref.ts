@@ -1,5 +1,6 @@
 import fs from "fs";
 import { dtsBaseName } from "./helpers";
+import { ConversionType } from "./types";
 // path to data/ directory
 const baseDir = `${__dirname}/../../..`;
 
@@ -12,6 +13,10 @@ export interface TerraConstructsReference {
    * References for the TerraConstructs AWS Declaration files
    */
   awsRefFiles: string[];
+  /**
+   * Unit Test helpers
+   */
+  testHelpers: string[];
 }
 
 /**
@@ -36,25 +41,48 @@ const refData: TerraConstructsReference = {
     `${baseDir}/reference/declarations/terraconstructs/aws/provider-config.generated.d.ts`,
     `${baseDir}/reference/declarations/terraconstructs/aws/util.d.ts`,
   ],
+  testHelpers: [
+    `${baseDir}/reference/declarations/terraconstructs/test/assertions.d.ts`,
+    `${baseDir}/reference/declarations/cdktf/testing/adapters/jest.d.ts`,
+    `${baseDir}/reference/declarations/cdktf/testing/index.d.ts`,
+  ],
 };
 
 /**
  * TerraConstructs Library
  */
 export class LibRef {
-  public static terraConstructs() {
-    return new LibRef(refData);
+  public static terraConstructs(type: ConversionType) {
+    return new LibRef(refData, type);
   }
-  private constructor(public readonly refData: TerraConstructsReference) {}
+
+  private constructor(
+    public readonly refData: TerraConstructsReference,
+    private readonly type: ConversionType
+  ) {}
 
   get core() {
+    const pathPrefix =
+      this.type === ConversionType.SOURCE ? "../../" : "../../../src";
     return this.refData.coreRefFiles
-      .map((f) => `// ../../${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
+      .map(
+        (f) => `${pathPrefix}/${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8")
+      )
       .join("\n\n");
   }
   get aws() {
+    const pathPrefix =
+      this.type === ConversionType.SOURCE ? "../" : "../../../src/aws";
     return this.refData.awsRefFiles
-      .map((f) => `// ../${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
+      .map(
+        (f) =>
+          `// ${pathPrefix}/${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8")
+      )
+      .join("\n\n");
+  }
+  get testing() {
+    return this.refData.testHelpers
+      .map((f) => `// ../../${dtsBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
       .join("\n\n");
   }
 }
