@@ -44,6 +44,7 @@ Pay special attention to provided TypeScript declaration files and JSDocs for ac
 
 - Generate a TypeScript source code file (.ts) formatted for CDKTF.
 - Ensure the file is syntactically correct and ready for writing to disk.
+- put the source code between triple back ticks ("```")
 
 ## Examples
 

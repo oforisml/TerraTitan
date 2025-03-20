@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { ConversionRequestProps } from "./types";
+import { ConversionType, type ConversionRequestProps } from "./types";
 import { cdktfBaseName } from "./helpers";
 import { findGeneratedImports, filterGeneratedModule } from "../retrieval";
 
@@ -37,6 +37,10 @@ export class ConversionRequest {
       return this._inputRef;
     }
     const inputRefSource = fs.readFileSync(this.props.inputRefFile, "utf8");
+    if (this.props.type === ConversionType.UNIT) {
+      this._inputRef = inputRefSource; // No filtering for unit tests for now
+      return this._inputRef;
+    }
     this._inputRef = filterInputRefFile(this.input, inputRefSource);
     return this._inputRef;
   }
@@ -46,7 +50,14 @@ export class ConversionRequest {
       return this._outputRefs;
     }
     this._outputRefs = this.props.outputRefFiles
-      .map((f) => `// ${cdktfBaseName(f)}\n` + fs.readFileSync(f, "utf8"))
+      .map(
+        (f) =>
+          `// ${
+            this.props.type === ConversionType.SOURCE
+              ? cdktfBaseName(f)
+              : path.basename(f)
+          }\n` + fs.readFileSync(f, "utf8")
+      )
       .join("\n\n");
     return this._outputRefs;
   }

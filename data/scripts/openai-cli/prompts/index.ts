@@ -1,28 +1,74 @@
 import fs from "fs";
 import path from "path";
+import { ConversionType } from "../util/types";
+
+export interface PromptTemplateNames {
+  /**
+   * The Instructions Prompt Template
+   */
+  instructions: string;
+  /**
+   * The User Prompt Template
+   */
+  userPrompt: string;
+  /**
+   * The Assistant Sample Template
+   */
+  assistantSample: string;
+}
+
+export function loadTemplates(
+  names: PromptTemplateNames,
+  templateType: ConversionType = ConversionType.SOURCE
+): PromptTemplates {
+  return {
+    instructions: Message.fromTemplateName(names.instructions, templateType),
+    user: Message.fromTemplateName(names.userPrompt, templateType),
+    assistantSample: Message.fromTemplateName(
+      names.assistantSample,
+      templateType
+    ),
+  };
+}
+
+export interface PromptTemplates {
+  instructions: Message<InstructionsPrompt>;
+  user: Message<UserPrompt>;
+  assistantSample: Message<ConversionExample>;
+}
 
 // TODO: use handlebars instead of manual replacement
 export class Message<T> {
   /**
-   * Create Message from Instructions Prompt Template
+   * Create Message from Instructions Prompt Template for source file conversions
    */
   public static instructions = new Message<InstructionsPrompt>(
     "instructions-v1"
   );
   /**
-   * Create Message from User Prompt Template
+   * Create Message from User Prompt Template for source file conversions
    */
   public static user = new Message<UserPrompt>("user-prompt-v1");
   /**
-   * Create Message from AssistantSample
+   * Create Message from AssistantSample for source file conversions
    */
   public static assistantSample = new Message<ConversionExample>(
     "assistant-sample-v1"
   );
 
+  public static fromTemplateName<T>(
+    name: string,
+    templateType: ConversionType = ConversionType.SOURCE
+  ): Message<T> {
+    return new Message<T>(name, templateType);
+  }
+
   private readonly promptPath: string;
-  private constructor(public readonly name: string) {
-    this.promptPath = path.join(__dirname, `${name}.md`);
+  private constructor(
+    public readonly name: string,
+    private readonly baseDir: ConversionType = ConversionType.SOURCE
+  ) {
+    this.promptPath = path.join(__dirname, this.baseDir, `${name}.md`);
   }
 
   private _text: string | undefined = undefined;
@@ -52,6 +98,10 @@ export interface InstructionsPrompt {
    * The TerraConstructs AWS module TS declaration files
    */
   aws: string;
+  /**
+   * The TerraConstructs Test Helpers TS declaration files
+   */
+  testing: string;
   /**
    * one-shot Conversion Sample Input (included in instructions)
    */

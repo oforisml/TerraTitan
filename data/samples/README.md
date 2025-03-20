@@ -1,21 +1,18 @@
 # Conversion Samples
 
-This directory contains curated samples of AWS CDK constructs and their Terraform CDK equivalents.
-
-Each sample should include:
-1. Original AWS CDK construct source code
-2. Original AWS CDK construct tests
-3. Converted Terraform CDK construct source code
-4. Converted Terraform CDK construct tests
+This directory contains curated samples of AWS CDK constructs and their TerraConstructs equivalents.
 
 ## Structure
 
-- `input/src/` - Original AWS CDK source files
-- `input/test/` - Original AWS CDK test files
-- `input/integ/` - Original AWS CDK integration test files
-- `output/src/` - Converted Terraform CDK source files
-- `output/test/` - Converted Terraform CDK test files
-- `output/integ/` - Converted Terraform CDK integration test files
+- `input/` Original AWS CDK ...
+  - `src/` - ... source files
+  - `declarations/` - ... type declaration files of the source files
+  - `test/` - ... test files
+  - `integ/` - ... integration test files
+- `output/` Converted TerraConstructs (Terraform CDK) ...
+  - `src/` -  ... source files
+  - `test/` - ... test files
+  - `integ/` - ... integration test files
 
 ## Adding Samples
 
@@ -24,7 +21,7 @@ Each sample should be placed in its own subdirectory named after the construct.
 
 ## Sample Index
 
-> NOTE: currently TerraConstructs merges AWS EventBridge, AWS SQS, AWS Kinesis, AWS SNS, ... into `notify`.
+> NOTE: currently TerraConstructs merges AWS EventBridge, AWS SQS, AWS Kinesis, AWS SNS, ... into `notify`. Samples here are organised by AWS CDK namespaces.
 
-- aws-events (no integration tests)
-- aws-kinesis (includes integration tests)
+- aws-events (missing integration test conversions)
+- aws-kinesis (includes integration test conversions)

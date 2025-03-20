@@ -1,7 +1,14 @@
 /**
  * A new Conversion Request
  */
-export interface ConversionRequestProps {
+export interface ConversionRequestProps extends ConversionRequestsBase {
+  /**
+   * The type of conversion
+   */
+  type: ConversionType;
+}
+
+export interface ConversionRequestsBase {
   /**
    * The AWS CDK file to convert
    */
@@ -30,6 +37,10 @@ export interface ConversionRequestProps {
  */
 export interface ConversionExample {
   /**
+   * The type of conversion
+   */
+  type: ConversionType;
+  /**
    * Example AWS CDK input file
    */
   inputFile: string;
@@ -45,4 +56,15 @@ export interface ConversionExample {
    * References for the example CDKTF output file
    */
   outputRefFiles: string[];
+}
+
+export enum ConversionType {
+  /**
+   * Source file conversion templates
+   */
+  SOURCE = "source",
+  /**
+   * Unit test file conversion templates
+   */
+  UNIT = "unit",
 }
