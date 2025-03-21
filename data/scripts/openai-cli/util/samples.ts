@@ -17,7 +17,9 @@ const EXAMPLES: Record<string, ConversionExample> = {
     type: ConversionType.SOURCE,
     // Example AWS CDK TypeScript source code
     inputFile: `${baseDir}/samples/aws-events/event-bus/input/src/event-bus.ts`,
-    inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-events/lib/events.generated.d.ts`,
+    inputRefFiles: [
+      `${baseDir}/reference/declarations/aws-cdk-lib/aws-events/lib/events.generated.d.ts`,
+    ],
 
     // Example CDKTF Source code output
     outputFile: `${baseDir}/samples/aws-events/event-bus/output/src/event-bus.ts`,
@@ -32,7 +34,9 @@ const EXAMPLES: Record<string, ConversionExample> = {
   "aws-events/event-bus/test": {
     type: ConversionType.UNIT,
     inputFile: `${baseDir}/samples/aws-events/event-bus/input/test/event-bus.test.ts`,
-    inputRefFile: `${baseDir}/samples/aws-events/event-bus/input/declarations/event-bus.d.ts`,
+    inputRefFiles: [
+      `${baseDir}/samples/aws-events/event-bus/input/declarations/event-bus.d.ts`,
+    ],
 
     // Example CDKTF Source code output
     outputFile: `${baseDir}/samples/aws-events/event-bus/output/test/event-bus.test.ts`,
@@ -48,7 +52,9 @@ const EXAMPLES: Record<string, ConversionExample> = {
   "aws-kinesis/stream/src": {
     type: ConversionType.SOURCE,
     inputFile: `${baseDir}/samples/aws-kinesis/stream/input/src/stream.ts`,
-    inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-kinesis/lib/kinesis.generated.d.ts`,
+    inputRefFiles: [
+      `${baseDir}/reference/declarations/aws-cdk-lib/aws-kinesis/lib/kinesis.generated.d.ts`,
+    ],
     outputFile: `${baseDir}/samples/aws-kinesis/stream/output/src/kinesis-stream.ts`,
     outputRefFiles: [
       // created by running bun scripts/merge-docs/index.ts
@@ -59,7 +65,9 @@ const EXAMPLES: Record<string, ConversionExample> = {
   "aws-kinesis/stream/test": {
     type: ConversionType.UNIT,
     inputFile: `${baseDir}/samples/aws-kinesis/stream/input/test/stream.test.ts`,
-    inputRefFile: `${baseDir}/samples/aws-kinesis/stream/input/declarations/stream.d.ts`,
+    inputRefFiles: [
+      `${baseDir}/samples/aws-kinesis/stream/input/declarations/stream.d.ts`,
+    ],
     outputFile: `${baseDir}/samples/aws-kinesis/stream/output/test/kinesis-stream.test.ts`,
     outputRefFiles: [
       // Unit Tests use Terraform HCL Markdown docs as attributes reference
@@ -79,7 +87,7 @@ export class Sample {
 
   private constructor(public example: ConversionExample) {}
   private _input: string | undefined = undefined;
-  private _inputRef: string | undefined = undefined;
+  private _inputRefs: string | undefined = undefined;
   private _outputRefs: string | undefined = undefined;
   private _output: string | undefined = undefined;
 
@@ -98,16 +106,21 @@ export class Sample {
     return this._output;
   }
   get inputRef(): string {
-    if (this._inputRef) {
-      return this._inputRef;
+    if (this._inputRefs) {
+      return this._inputRefs;
     }
-    const inputRefSource = fs.readFileSync(this.example.inputRefFile, "utf8");
-    if (this.example.type === ConversionType.UNIT) {
-      this._inputRef = inputRefSource; // No filtering for unit tests for now
-      return this._inputRef;
+    const contents: string[] = [];
+    for (const inputRef of this.example.inputRefFiles) {
+      const header = `// ${path.basename(inputRef)}\n`;
+      const inputRefSource = fs.readFileSync(inputRef, "utf8");
+      if (this.example.type === ConversionType.UNIT) {
+        contents.push(header + inputRefSource); // no filtering on ref files for unit tests for now
+      } else {
+        contents.push(header + filterInputRefFile(this.input, inputRefSource));
+      }
     }
-    this._inputRef = filterInputRefFile(this.input, inputRefSource);
-    return this._inputRef;
+    this._inputRefs = contents.join("\n\n");
+    return this._inputRefs;
   }
   get outputRefs(): string {
     if (this._outputRefs) {
@@ -120,7 +133,7 @@ export class Sample {
             this.example.type === ConversionType.SOURCE
               ? cdktfBaseName(f)
               : path.basename(f)
-          }\n` + fs.readFileSync(f, "utf8")
+          }\n` + fs.readFileSync(f, "utf8").replace(/^#/gm, "###")
       )
       .join("\n\n");
     return this._outputRefs;
@@ -129,7 +142,7 @@ export class Sample {
     return new ConversionRequest({
       type: this.example.type,
       inputFile: this.example.inputFile,
-      inputRefFile: this.example.inputRefFile,
+      inputRefFiles: this.example.inputRefFiles,
       outputRefFiles: this.example.outputRefFiles,
       responseFile: "responses/fake-response.md",
     });

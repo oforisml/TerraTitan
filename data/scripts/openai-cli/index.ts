@@ -7,6 +7,7 @@ import { BasicFlow } from "./workflows";
 import { OPENAI_MODEL } from "./util/models";
 import { ConversionType } from "./util/types";
 import { getDateSuffix } from "./util/helpers";
+import { unitRequests } from "./requests";
 
 // path to data/ directory
 const baseDir = `${__dirname}/../..`;
@@ -43,14 +44,15 @@ const unitFlow = new BasicFlow({
   isDryRun,
 });
 
+// const unitToConvert = unitRequests["aws-events/connection"]!;
+const unitToConvert = unitRequests["aws-sns/topic"]!;
+// const unitToConvert = unitRequests["aws-sns/subscription"]!;
 void unitFlow.run({
-  inputFile: `${baseDir}/samples/aws-events/connection/input/test/connection.test.ts`,
-  inputRefFile: `${baseDir}/samples/aws-events/connection/input/declarations/connection.d.ts`,
-  outputRefFiles: [
-    // Unit Tests use Terraform HCL Markdown docs as reference for testing attributes
-    `${baseDir}/reference/docs/provider-aws/r/cloudwatch_event_connection.html.markdown`,
-  ],
-  responseFile: `./responses/connection-test-response-${getDateSuffix()}.md`,
-  // For token estimates...
-  expectedFile: `${baseDir}/samples/aws-events/connection/output/test/connection.test.ts`,
+  inputFile: `${baseDir}/${unitToConvert.inputFile}`,
+  inputRefFiles: unitToConvert.inputRefFiles.map((f) => `${baseDir}/${f}`),
+  outputRefFiles: unitToConvert.outputRefFiles.map((f) => `${baseDir}/${f}`),
+  responseFile: `${unitToConvert.responseFile}-${getDateSuffix()}.md`,
+  expectedFile: unitToConvert.expectedFile
+    ? `${baseDir}/${unitToConvert.expectedFile}`
+    : undefined,
 });

@@ -16,7 +16,7 @@ export interface ConversionRequestsBase {
   /**
    * References for the AWS CDK input file
    */
-  inputRefFile: string;
+  inputRefFiles: string[];
   /**
    * References for the expected CDKTF output file
    */
@@ -47,7 +47,7 @@ export interface ConversionExample {
   /**
    * References for the AWS CDK input file
    */
-  inputRefFile: string;
+  inputRefFiles: string[];
   /**
    * Example CDKTF output file
    */
