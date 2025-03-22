@@ -113,10 +113,11 @@ export class Sample {
     for (const inputRef of this.example.inputRefFiles) {
       const header = `// ${path.basename(inputRef)}\n`;
       const inputRefSource = fs.readFileSync(inputRef, "utf8");
-      if (this.example.type === ConversionType.UNIT) {
-        contents.push(header + inputRefSource); // no filtering on ref files for unit tests for now
-      } else {
+      if (inputRef.endsWith("generated.d.ts")) {
+        // filter generated code down to only relevant declarations
         contents.push(header + filterInputRefFile(this.input, inputRefSource));
+      } else {
+        contents.push(header + inputRefSource);
       }
     }
     this._inputRefs = contents.join("\n\n");

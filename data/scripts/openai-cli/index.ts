@@ -1,13 +1,8 @@
-/**
- * Sample implementation of Conversion CLI using OpenAI Responses API
- *
- * Ref: https://cookbook.openai.com/examples/responses_api/responses_example
- */
 import { BasicFlow } from "./workflows";
 import { OPENAI_MODEL } from "./util/models";
 import { ConversionType } from "./util/types";
 import { getDateSuffix } from "./util/helpers";
-import { unitRequests } from "./requests";
+import { sourceRequests, unitRequests } from "./requests";
 
 // path to data/ directory
 const baseDir = `${__dirname}/../..`;
@@ -15,44 +10,48 @@ const baseDir = `${__dirname}/../..`;
 const args = process.argv.slice(2);
 const isDryRun = args.includes("--dry-run");
 
-// const sourceFlow = new BasicFlow({
-//   model: OPENAI_MODEL.O3_MINI,
-//   reasoningEffort: "high",
-//   type: ConversionType.SOURCE,
-//   sampleNames: ["aws-events/event-bus/src", "aws-kinesis/stream/src"],
-//   isDryRun,
-// });
-
-// void sourceFlow.run({
-//   inputFile: `${baseDir}/samples/aws-events/connection/input/src/connection.ts`,
-//   // NOTE: this filters on Cfn imports from /.*\.generated\.ts found in inputFile...
-//   inputRefFile: `${baseDir}/reference/declarations/aws-cdk-lib/aws-events/lib/events.generated.d.ts`,
-//   outputRefFiles: [
-//     // Note: created by running bun scripts/merge-docs/index.ts!
-//     `${baseDir}/reference/merged/provider-aws/cloudwatch-event-connection/index.d.ts`,
-//   ],
-//   // For token estimates...
-//   expectedFile: `${baseDir}/samples/aws-events/connection/output/src/connection.ts`,
-//   responseFile: `./responses/connection-response-${getDateSuffix()}.md`,
-// });
-
-const unitFlow = new BasicFlow({
+const sourceFlow = new BasicFlow({
   model: OPENAI_MODEL.O3_MINI,
   reasoningEffort: "high",
-  type: ConversionType.UNIT,
-  sampleNames: ["aws-events/event-bus/test", "aws-kinesis/stream/test"],
+  type: ConversionType.SOURCE,
+  sampleNames: ["aws-events/event-bus/src", "aws-kinesis/stream/src"],
   isDryRun,
 });
 
-// const unitToConvert = unitRequests["aws-events/connection"]!;
-const unitToConvert = unitRequests["aws-sns/topic"]!;
-// const unitToConvert = unitRequests["aws-sns/subscription"]!;
-void unitFlow.run({
-  inputFile: `${baseDir}/${unitToConvert.inputFile}`,
-  inputRefFiles: unitToConvert.inputRefFiles.map((f) => `${baseDir}/${f}`),
-  outputRefFiles: unitToConvert.outputRefFiles.map((f) => `${baseDir}/${f}`),
-  responseFile: `${unitToConvert.responseFile}-${getDateSuffix()}.md`,
-  expectedFile: unitToConvert.expectedFile
-    ? `${baseDir}/${unitToConvert.expectedFile}`
+// const sourceToConvert = sourceRequests["aws-events/connection"]!;
+// const sourceToConvert = sourceRequests["aws-iam/user"]!; // 0321115312
+// const sourceToConvert = sourceRequests["aws-iam/group"]!; // 0321140052
+// const sourceToConvert = sourceRequests["aws-sns/topic"]!; // 0322100052
+const sourceToConvert = sourceRequests["aws-sns/topic-base"]!; //
+void sourceFlow.run({
+  inputFile: `${baseDir}/${sourceToConvert.inputFile}`,
+  inputRefFiles: sourceToConvert.inputRefFiles.map((f) => `${baseDir}/${f}`),
+  outputRefFiles: sourceToConvert.outputRefFiles.map((f) => `${baseDir}/${f}`),
+  responseFile: `${sourceToConvert.responseFile}-${getDateSuffix()}.md`,
+  expectedFile: sourceToConvert.expectedFile
+    ? `${baseDir}/${sourceToConvert.expectedFile}`
     : undefined,
 });
+
+// const unitFlow = new BasicFlow({
+//   model: OPENAI_MODEL.O3_MINI,
+//   reasoningEffort: "high",
+//   type: ConversionType.UNIT,
+//   sampleNames: ["aws-events/event-bus/test", "aws-kinesis/stream/test"],
+//   isDryRun,
+// });
+
+// // const unitToConvert = unitRequests["aws-events/connection"]!;
+// // const unitToConvert = unitRequests["aws-iam/user"]!;
+// // const unitToConvert = unitRequests["aws-iam/group"]!;
+// const unitToConvert = unitRequests["aws-sns/topic"]!;
+// // const unitToConvert = unitRequests["aws-sns/subscription"]!;
+// void unitFlow.run({
+//   inputFile: `${baseDir}/${unitToConvert.inputFile}`,
+//   inputRefFiles: unitToConvert.inputRefFiles.map((f) => `${baseDir}/${f}`),
+//   outputRefFiles: unitToConvert.outputRefFiles.map((f) => `${baseDir}/${f}`),
+//   responseFile: `${unitToConvert.responseFile}-${getDateSuffix()}.md`,
+//   expectedFile: unitToConvert.expectedFile
+//     ? `${baseDir}/${unitToConvert.expectedFile}`
+//     : undefined,
+// });

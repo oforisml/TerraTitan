@@ -1,4 +1,4 @@
-Convert a given TypeScript code file containing an AWS CDK Consruct to a TerraConstruct (using CDKTF), following specified guidance and examples.
+Convert a given TypeScript code file containing an AWS CDK Construct to a TerraConstruct (using CDKTF), following specified guidance and examples.
 Ensure the output is a valid source code file that can be directly written to disk.
 Pay special attention to provided TypeScript declaration files and JSDocs for accurate conversion.
 
