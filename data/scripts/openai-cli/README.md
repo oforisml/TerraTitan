@@ -75,6 +75,18 @@ Iterate on templates:
 
 Supported Template values - see [prompts/index.ts](./prompts/index.ts).
 
+## Generate Sample
+
+```bash
+bun gen-sample.ts
+```
+
+## Generate Requests
+
+```bash
+bun gen-requests.ts
+```
+
 ## BrainTrust Evals
 
 > [!NOTE]
