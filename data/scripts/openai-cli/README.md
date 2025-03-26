@@ -8,10 +8,15 @@ Refer to [OpenAI Changelog](https://platform.openai.com/docs/changelog) for late
 
 1. **Install** [Bun](https://bun.sh/) runtime
 
-1. **Set up the OpenAI API:**
+1. **Set up the OpenAI & Gemini API:**
 
    - If you're new to the OpenAI API, [sign up for an account](https://platform.openai.com/signup).
    - Follow the [Quickstart](https://platform.openai.com/docs/quickstart) to retrieve your API key.
+
+   For Gemini
+
+   - Follow the Gemini API [Quickstart](https://ai.google.dev/gemini-api/docs/quickstart?lang=node)
+   - Get API Key from [aistudio - apikey](https://aistudio.google.com/apikey)
 
 1. **Set the OpenAI API key:**
 
@@ -19,6 +24,14 @@ Refer to [OpenAI Changelog](https://platform.openai.com/docs/changelog) for late
 
    ```bash
    OPENAI_API_KEY=<your_api_key>
+   ```
+
+1. **set the Gemini API Key:**
+
+   Set the `GEMINI_API_KEY` environment variable in the project: Create a `.env` file at the root of the project and add the following line (see `.env.exmaple` for reference):
+
+   ```bash
+   GEMINI_API_KEY=<your_api_key>
    ```
 
 1. **Set the BrainTrust API Key:**
@@ -76,3 +89,4 @@ npx braintrust eval tutorial.eval.ts
 ## References
 
 - [OpenAI New API Starter App](https://github.com/openai/openai-responses-starter-app/tree/main): An extensive NextJS starter to build interactive web interface leveraging web-search, tools-usage, ....
+- [Gemini JS SDK](https://github.com/googleapis/js-genai).
