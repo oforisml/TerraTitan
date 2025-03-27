@@ -1,5 +1,7 @@
 # mastra-workflow
 
+Playground for Mastra guides and samples.
+
 To install dependencies:
 
 ```bash
