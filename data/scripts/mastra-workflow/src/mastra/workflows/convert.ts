@@ -5,8 +5,14 @@ import { z } from 'zod';
 
 const llm = openai('gpt-4o');
 
-// TODO: add agentic instructions here
-// const agent = new Agent({})
+const agent = new Agent({
+  name: 'convert-agent',
+  model: llm,
+  instructions: ``, // TODO: add system instructions here
+  evals: {
+    // TODO: add evals here
+  },
+})
 
 const fetchPackage = new Step({
   id: 'fetch-package',
@@ -33,8 +39,35 @@ const convert = new Step({
   inputSchema: z.object({
     target: z.string().describe('The target AWSCDKTF package to convert'),
   }),
-  execute: async ({ context }) => {
-    // TODO: implement
+  execute: async ({ context, mastra }) => {
+    const packageContent = context?.getStepResult('fetch-package'); // might be from another step
+
+    if (!packageContent) {
+      throw new Error('Package content not found');
+    }
+
+    const prompt = `Convert the following AWSCDKTF package to CDKTF:
+    ${context?.getStepResult('fetch-package')}
+    `;
+
+    const response = await agent.stream([
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]);
+
+    let convertedText = '';
+
+    for await (const chunk of response.textStream) {
+      process.stdout.write(chunk);
+      convertedText += chunk;
+    }
+
+    return {
+      converted: convertedText,
+    };
+    // TODO: add evals here?
   },
 });
 
