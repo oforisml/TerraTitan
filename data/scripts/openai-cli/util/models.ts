@@ -8,8 +8,12 @@
 /**
  * Simple check to see if a model is a reasoning model
  */
-export function isReasoningModel(model: OPENAI_MODEL): boolean {
+export function isReasoningModel(model: OPENAI_MODEL | GEMINI_MODEL): boolean {
   return !model.startsWith("gpt");
+}
+
+export enum GEMINI_MODEL {
+  GEMINI_2_5_PRO_EXP_03_25 = "gemini-2.5-pro-exp-03-25",
 }
 
 /**

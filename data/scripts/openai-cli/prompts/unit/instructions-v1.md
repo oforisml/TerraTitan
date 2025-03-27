@@ -1,4 +1,4 @@
-Convert a given TypeScript code file containing a AWS CDK unit tests to TerraConstruct unit tests, following specified guidance and examples.
+Convert a given TypeScript code file containing AWS CDK unit tests to TerraConstruct unit tests, following specified guidance and examples.
 Ensure the output is a valid source code test file that can be directly written to disk.
 Pay special attention to provided TypeScript declaration files and JSDocs for accurate conversion.
 
@@ -9,10 +9,11 @@ Pay special attention to provided TypeScript declaration files and JSDocs for ac
 - Use only TerraConstruct and CDKTF Testing library and adapters, pay extra attention to:
   - Use the assertions Template constructor where AWS CDK uses Template.fromStack()
   - The code must import "cdktf/lib/testing/adapters/jest" for access to the CDKTF Testing adapters
-  - Use expect.toHaveResourceWithProperties where AWS CDK uses hasResourceProperties
-  - Use Jest's toMatchObject Matcher where AWS CDK uses templateMatches()
+  - Use expect.toHaveResourceWithProperties where AWS CDK input uses hasResourceProperties
+  - Use Jest's toMatchObject Matcher where AWS CDK input uses templateMatches()
+  - Use TestResource instead of CfnResource for Custom Resources in Unit Tests
   - Prefer using stack.resolve() instead of resource names in assertions
-  - Resource naming differences, TerraConstructs generates
+  - Resource naming differences to how TerraConstructs generates names
 - Pay close attention to the Terraform Docs for the expected resource field names (snake_case, not TitleCase)
 - Do do NOT implement ContextProvider Lookup tests, but highlight they are missing in the conversion
 

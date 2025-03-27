@@ -43,6 +43,7 @@ const refData: TerraConstructsReference = {
   ],
   testHelpers: [
     `${baseDir}/reference/declarations/terraconstructs/test/assertions.d.ts`,
+    `${baseDir}/reference/declarations/terraconstructs/test/test-resource.d.ts`,
     `${baseDir}/reference/declarations/cdktf/testing/adapters/jest.d.ts`,
     `${baseDir}/reference/declarations/cdktf/testing/index.d.ts`,
   ],

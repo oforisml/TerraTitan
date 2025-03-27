@@ -36,12 +36,18 @@ export class ConversionRequest {
     if (this._inputRef) {
       return this._inputRef;
     }
-    const inputRefSource = fs.readFileSync(this.props.inputRefFile, "utf8");
-    if (this.props.type === ConversionType.UNIT) {
-      this._inputRef = inputRefSource; // No filtering for unit tests for now
-      return this._inputRef;
+    const contents: string[] = [];
+    for (const inputRef of this.props.inputRefFiles) {
+      const header = `// ${path.basename(inputRef)}\n`;
+      const inputRefSource = fs.readFileSync(inputRef, "utf8");
+      if (inputRef.endsWith("generated.d.ts")) {
+        // filter generated code down to only relevant declarations
+        contents.push(header + filterInputRefFile(this.input, inputRefSource));
+      } else {
+        contents.push(header + inputRefSource);
+      }
     }
-    this._inputRef = filterInputRefFile(this.input, inputRefSource);
+    this._inputRef = contents.join("\n\n");
     return this._inputRef;
   }
   /** Reference data for the expected CDKTF Output */
@@ -56,7 +62,7 @@ export class ConversionRequest {
             this.props.type === ConversionType.SOURCE
               ? cdktfBaseName(f)
               : path.basename(f)
-          }\n` + fs.readFileSync(f, "utf8")
+          }\n` + fs.readFileSync(f, "utf8").replace(/^#/gm, "###")
       )
       .join("\n\n");
     return this._outputRefs;
