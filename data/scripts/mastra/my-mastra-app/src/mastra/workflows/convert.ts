@@ -1,7 +1,11 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Step, Workflow } from '@mastra/core/workflows';
+import path from 'path';
 import { z } from 'zod';
+import fs from 'fs';
+import os from 'os';
+import { simpleGit } from 'simple-git';
 
 const llm = openai('gpt-4o');
 
@@ -14,6 +18,36 @@ const agent = new Agent({
   },
 })
 
+const cloneRepo = new Step({
+  id: 'clone-repo',
+  description: 'Clones the AWS CDK repo into a local directory',
+  execute: async ({ context }) => {
+    const repoUrl = 'https://github.com/aws/aws-cdk';
+    const localDir = path.join(process.cwd(), 'aws-cdk'); 
+    
+    try {
+      if (fs.existsSync(path.join(localDir, '.git'))) {
+        console.log('AWS CDK repo exists, updating to latest...');
+        
+        const git = simpleGit(localDir);
+        await git.fetch('origin');
+        await git.pull('origin', 'main');
+        
+        console.log('AWS CDK repo updated successfully');
+      } else {
+        console.log('Cloning AWS CDK repo...');
+        fs.mkdirSync(path.dirname(localDir), { recursive: true });
+        await simpleGit().clone(repoUrl, localDir);
+        console.log('AWS CDK repo cloned successfully');
+      }
+      return { repoDir: localDir };
+    } catch (error) {
+      console.error('Error handling AWS CDK repository:', error);
+      throw error;
+    }
+  },
+});
+
 const fetchPackage = new Step({
   id: 'fetch-package',
   description: 'Fetches the target AWSCDKTF package',
@@ -24,6 +58,7 @@ const fetchPackage = new Step({
     // TODO: implement
   },
 });
+
 const mergeDocs = new Step({
   id: 'merge-docs',
   inputSchema: z.object({
@@ -96,11 +131,11 @@ const convertWorkflow = new Workflow({
   triggerSchema: z.object({
     target: z.string().describe('The target AWSCDKTF package to convert'),
   }),
-}).step(fetchPackage)
-  .then(mergeDocs)
-  .then(convert)
-  .then(validate)
-  .then(publish);
+}).step(cloneRepo);
+  // .then(mergeDocs)
+  // .then(convert)
+  // .then(validate)
+  // .then(publish);
 
 convertWorkflow.commit();
 
