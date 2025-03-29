@@ -4,23 +4,37 @@ TerraTitan Core Workflows using Mastra.
 
 [mastra](https://mastra.ai) is an open-source TypeScript agent framework
 
-To install dependencies:
+## Prerequisites
 
-```bash
-pnpm install
-```
+1. **Set up the Gemini API:**
 
-To run Mastra dashboard:
+   - Follow the Gemini API [Quickstart](https://ai.google.dev/gemini-api/docs/quickstart?lang=node)
+   - Get API Key from [aistudio - apikey](https://aistudio.google.com/apikey)
 
-```bash
-pnpm dev
-```
+1. **Set the Gemini API Key:**
 
-To Programmatically start the workflows defined under `src/index.ts`:
+   Set the `GOOGLE_GENERATIVE_AI_API_KEY` environment variable in the project: Create a `.env` file at the root of the project and add the following line (see `.env.exmaple` for reference):
 
-```bash
-pnpm start
-```
+   ```bash
+   GOOGLE_GENERATIVE_AI_API_KEY=<your_api_key>
+   ```
 
-This project was created following [mastra manual](https://mastra.ai/docs/getting-started/installation#create-a-new-project-1)
+1. **To install dependencies:**
 
+   ```bash
+   pnpm install
+   ```
+
+1. **To run Mastra dashboard:**
+
+   ```bash
+   pnpm dev
+   ```
+
+1. **To Programmatically start the workflows defined under `src/index.ts`:**
+
+   ```bash
+   pnpm start
+   ```
+
+This project follow [mastra project structure](https://mastra.ai/docs/getting-started/project-structure)

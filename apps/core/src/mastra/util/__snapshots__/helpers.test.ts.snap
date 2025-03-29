@@ -1,0 +1,24 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`filterGeneratedModule > should keep declarations for specified symbols and their related types 1`] = `
+"import * as cdk from "../../core";
+import * as constructs from "constructs";
+;
+;
+export declare class CfnConnection extends cdk.CfnResource implements cdk.IInspectable {
+    public readonly y: string;
+}
+export declare namespace CfnConnection {
+    interface AuthParametersProperty {
+        readonly apiKeyAuthParameters?: ApiKeyAuthParametersProperty;
+    }
+    interface ApiKeyAuthParametersProperty {
+        readonly apiKeyName: string;
+        readonly apiKeyValue: string;
+    }
+}
+export interface CfnConnectionProps {
+    readonly prop2: string;
+}
+"
+`;
