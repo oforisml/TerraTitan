@@ -1,0 +1,14 @@
+This product includes software developed by
+
+mastra.ai - https://github.com/mastra-ai/mastra/blob/mastra%400.4.4/LICENSE
+aws-cdk - https://github.com/aws/aws-cdk/blob/v2.154.1/NOTICE
+terraform-cdk - https://github.com/hashicorp/terraform-cdk/blob/v0.20.11/LICENSE
+
+AWS Cloud Development Kit (AWS CDK)
+Copyright 2018-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+The Initial Developer of some parts of the framework, which are copied from, derived from, or
+inspired by AWS CDK, is TerraConstructs.
+Copyright 2024 - 2024 TerraConstructs. All Rights Reserved.
+
+Modifications were made to support Terraform AWS Provider resource semantics.
