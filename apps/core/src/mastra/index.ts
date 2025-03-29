@@ -1,13 +1,10 @@
-import { Mastra } from "@mastra/core";
+import { Mastra } from '@mastra/core';
 
-// import { weatherAgent } from "./agents/weather";
-import { candidateWorkflow } from "./workflows/candidate";
-import { myWorkflow } from "./workflows/demo";
+import { sourceConversionWorkflow } from './workflows/source-convert.js';
+// TODO: sourceConverter does net extend Agent and is custom for single workflow
+// import { sourceConverter } from "./agents/source-converter";
 
-export const mastra = new Mastra({
-  // agents: { weatherAgent },
-  workflows: {
-    candidateWorkflow,
-    myWorkflow,
-  },
+export const mastra: Mastra = new Mastra({
+  agents: {},
+  workflows: { sourceConversionWorkflow },
 });

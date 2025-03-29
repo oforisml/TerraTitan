@@ -1,3 +1,3 @@
-import { baseConfig } from "@repo/vitest-config/base";
+import { baseConfig } from '@repo/vitest-config/base';
 
 export default baseConfig;
