@@ -34,3 +34,5 @@ Thumbs.db
 
 # DataStax credentials
 astra-credentials.json
+
+scripts/mastra/my-mastra-app/.mastra
