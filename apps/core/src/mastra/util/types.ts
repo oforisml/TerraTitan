@@ -40,3 +40,14 @@ export interface ConversionRequestProps {
    */
   outputRefFiles: string[];
 }
+
+export interface MergeDocsRequestProps {
+  /**
+   * The CDKTF declaration file to merge into
+   */
+  declarationPath: string;
+  /**
+   * The CDKTF Typescript Markdown file to merge with
+   */
+  markdownPath: string;
+}

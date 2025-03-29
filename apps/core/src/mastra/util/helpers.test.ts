@@ -1,5 +1,26 @@
 import { expect, test, describe } from 'vitest';
-import { filterGeneratedModule, findGeneratedImports, filterInputRefFile } from './helpers.js';
+import { filterGeneratedModule, findGeneratedImports, filterInputRefFile, kebabToTitleCase } from './helpers.js';
+
+describe('kebabToTitleCase', () => {
+  test('should convert kebab-case to TitleCase', () => {
+    const input = 'sns-topic';
+    const expectedOutput = 'SnsTopic';
+    const result = kebabToTitleCase(input);
+    expect(result).toEqual(expectedOutput);
+  });
+  test('should handle empty string', () => {
+    const input = '';
+    const expectedOutput = '';
+    const result = kebabToTitleCase(input);
+    expect(result).toEqual(expectedOutput);
+  });
+  test('should handle single word', () => {
+    const input = 'example';
+    const expectedOutput = 'Example';
+    const result = kebabToTitleCase(input);
+    expect(result).toEqual(expectedOutput);
+  });
+});
 
 describe('filterInputRefFile', () => {
   test('should process input file and filter declarations', async () => {

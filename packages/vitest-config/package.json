@@ -13,9 +13,9 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@vitest/coverage-istanbul": "^3.0.7",
+    "@vitest/coverage-istanbul": "^3.0.9",
     "glob": "^11.0.1",
     "nyc": "^17.1.0",
-    "vitest": "^3.0.7"
+    "vitest": "^3.0.9"
   }
 }

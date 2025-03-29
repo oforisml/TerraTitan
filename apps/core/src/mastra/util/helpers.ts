@@ -15,6 +15,13 @@ export const gitRoot = execSync('git rev-parse --show-toplevel', {
   cwd: __dirname,
 }).trim();
 
+export function kebabToTitleCase(str: string): string {
+  return str
+    .split('-')
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+    .join('');
+}
+
 /**
  * Get the base name of a typescript declaration file
  */
