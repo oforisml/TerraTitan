@@ -1,12 +1,26 @@
 # Node.js
-node_modules/
-dist/
-coverage/
+node_modules
 
-# Environment variables
+# Local env files
 .env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage
+
+# Turbo
+.turbo
+
+# Mastra AI builds
+.mastra
+
+# Build Outputs
+out/
+build
+dist
 
 # Logs
 logs/
@@ -16,7 +30,6 @@ pnpm-debug.log*
 
 # Editor directories and files
 .idea/
-.vscode/
 *.suo
 *.ntvs*
 *.njsproj
@@ -32,7 +45,8 @@ pnpm-debug.log*
 ehthumbs.db
 Thumbs.db
 
-# DataStax credentials
-astra-credentials.json
-
 scripts/mastra/my-mastra-app/.mastra
+# code coverage
+coverage
+*.lcov
+coverage.json
