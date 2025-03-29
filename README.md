@@ -16,34 +16,38 @@ TerraTitan is an LLM-powered workflow that converts AWS CDK constructs to Terraf
 
 ```console
 .
-data
-├── reference               # Reference Data for LLM Prompting
-│  ├── declarations         # Typescript declaration files
-│  │  ├── aws-cdk-lib
-│  │  ├── provider-aws
-│  │  └── terraconstructs
-│  ├── docs                 # Terraform Provider Docs (markdown)
-│  │  ├── provider-aws
-│  │  └── typescript
-│  ├── merged               # Typescript declaration merged with Provider Docs
-│  │  └── provider-aws
-│  └── README.md
-├── samples                 # AWS CDK -> CDKTF Sample conversions (few shot prompting + validation)
-│  ├── aws-events
-│  │  ├── connection
-│  │  ├── event-bus
-│  │  ├── event-pattern
-│  │  ├── input
-│  │  └── schedule
-│  ├── aws-kinesis
-│  │  └── stream
-│  └── README.md
-├── scripts                # Scripts to ...
-│  ├── merge-docs          # ... merge Markdown docs into declaration file
-│  ├── openai-cli          # ... PoC OpenAI prompts
-│  ├── tf-doc-scrape.sh    # ... download copy of Terraform Docs (markdown)
-│  └── validate-file       # ... run tsc syntax check on sourceFile
-└── src                    # <<<< IGNORE THIS RIGHT NOW
+├── apps
+│  └── core                     # Core TerraTitan app
+├── data
+│  ├── reference                # Reference Data for LLM Prompting
+│  │  ├── declarations          # Typescript declaration files
+│  │  │   ├── aws-cdk-lib
+│  │  │   ├── provider-aws
+│  │  │   └── terraconstructs
+│  │  ├── docs                  # Terraform Provider Docs (markdown)
+│  │  │   ├── provider-aws
+│  │  │   └── typescript
+│  │  └── merged                # Typescript declaration merged with Provider Docs
+│  │      └── provider-aws
+│  ├── samples                  # AWS CDK -> CDKTF Sample conversions ( for few shot prompting + validation Evals)
+│  │  ├── aws-events
+│  │  ├── aws-iam
+│  │  ├── aws-kinesis
+│  │  ├── aws-sns
+│  │  ├── aws-sqs
+│  │  └── README.md
+│  └── scripts                  # PoC Scripts to  ...
+│     ├── claude-cli            # ... Anthropic prompt benchmarking (using bun.sh)
+│     ├── mastra                # ... Mastra PoC workspaces (using NodeJS + pnpm)
+│     ├── merge-docs            # ... merge Markdown docs into CDKTF provider declaration files (using bun.sh)
+│     ├── openai-cli            # ... OpenAI/Gemini prompt benchmarking (using bun.sh)
+│     ├── research-assitant     # ... demo mastra workflow (using bun.sh)
+│     ├── tf-doc-scrape.sh      # ... download copy of Terraform Docs (markdown)
+│     └── validate-file         # ... run tsc syntax check on sourceFile
+└── packages
+   ├── eslint-config
+   ├── typescript-config
+   └── vitest-config
 ```
 
 ## Pnpm Worskpaces and Turbo Repo
