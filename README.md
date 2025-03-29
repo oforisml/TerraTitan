@@ -71,10 +71,10 @@ This repository uses [pnpm](https://pnpm.io/) workspaces and [turbo](https://tur
 
 ### Run tasks
 
-`pnpm run test`: Runs the test in each package using Turborepo.
-`pnpm run view-report`: Collects coverage from each package and shows it in a merged report.
-`pnpm run build`: Runs build task
-`pnpm run repo-lint`: Lints repo-wide dependency versions
+- `pnpm run test`: Runs the test in each package using Turborepo.
+- `pnpm run view-report`: Collects coverage from each package and shows it in a merged report.
+- `pnpm run build`: Runs build task
+- `pnpm run repo-lint`: Lints repo-wide dependency versions
 
 ### Useful Links
 
