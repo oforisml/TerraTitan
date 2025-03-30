@@ -1,10 +1,11 @@
 import { Mastra } from '@mastra/core';
 
 import { sourceConversionWorkflow } from './workflows/source-convert.js';
-// TODO: sourceConverter does net extend Agent and is custom for single workflow
-// import { sourceConverter } from "./agents/source-converter";
+import { unitConversionWorkflow } from './workflows/unit-convert.js';
+// import { sourceConverter } from './agents/source-converter/index.js';
 
 export const mastra: Mastra = new Mastra({
-  agents: {},
-  workflows: { sourceConversionWorkflow },
+  // TODO: sourceConverter should extend Agent?
+  // agents: { sourceConverter },
+  workflows: { sourceConversionWorkflow, unitConversionWorkflow },
 });

@@ -108,7 +108,7 @@ ${request.outputRefs}
 **AWS CDK Type Declarations:**
 Refer to the following Reference declarations used by the AWSCDK constructs:
 \`\`\`typescript
-{{inputRef}}
+${request.inputRef}
 \`\`\`
 
 Format:
