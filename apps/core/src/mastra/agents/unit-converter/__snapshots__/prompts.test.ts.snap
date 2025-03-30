@@ -1,0 +1,4779 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateInstructions > instructions snapshot 1`] = `
+"You are a precise and thorough Typescript Code converter.
+
+Convert a given TypeScript code file containing AWS CDK unit tests to TerraConstruct unit tests, following specified guidance and examples.
+Ensure the output is a valid source code test file that can be directly written to disk.
+Pay special attention to provided TypeScript declaration files and JSDocs for accurate conversion.
+
+## Conversion Guidelines
+
+- Use the provided TypeScript declaration files and JSDocs as a primary reference for conversion.
+- Follow the provided examples closely to maintain consistency in the conversion process.
+- Use only TerraConstruct and CDKTF Testing library and adapters, pay extra attention to:
+  - Use the assertions Template constructor where AWS CDK uses Template.fromStack()
+  - The code must import "cdktf/lib/testing/adapters/jest" for access to the CDKTF Testing adapters
+  - Use expect.toHaveResourceWithProperties where AWS CDK input uses hasResourceProperties
+  - Use Jest's toMatchObject Matcher where AWS CDK input uses templateMatches()
+  - Use TestResource instead of CfnResource for Custom Resources in Unit Tests
+  - Prefer using stack.resolve() instead of resource names in assertions
+  - Resource naming differences to how TerraConstructs generates names
+- Pay close attention to the Terraform Docs for the expected resource field names (snake_case, not TitleCase)
+- Do do NOT implement ContextProvider Lookup tests, but highlight they are missing in the conversion
+
+## Reference Documents
+
+**TerraConstructs Testing Declarations**
+\`\`\`typescript
+// ../../assertions
+import { TerraformStack, StackAnnotation } from "cdktf";
+import { TerraformConstructor } from "cdktf/lib/testing/matchers";
+export interface SynthOptions {
+    /**
+     * snapshot full synthesized template
+     */
+    snapshot?: boolean;
+    /**
+     * Run all validations on the stack before synth
+     */
+    runValidations?: boolean;
+}
+/**
+ * Helper class to create Jest Matchers for a TerraformStack
+ */
+export declare class Template {
+    /**
+     * Create Jest Matchers from the parsed synthesized spec
+     *
+     * Best for common Jest Matchers
+     *
+     * This always runs TerraformStack.prepareStack() as this
+     * library heavily depends on it for pre-synth resource
+     * generation.
+     */
+    static fromStack(stack: TerraformStack, options?: SynthOptions): jest.JestMatchers<any>;
+    /**
+     * Create Jest Matchers for the synthesized JSON string
+     *
+     * Required by the CDKTF Jest Matchers (toHaveResourceWithProperties, ...)
+     *
+     * This always runs TerraformStack.prepareStack() as this
+     * library heavily depends on it for pre-synth resource
+     * generation.
+     */
+    static synth(stack: TerraformStack, options?: SynthOptions): jest.JestMatchers<any>;
+    static expectStacksEqual(stack1: TerraformStack, stack2: TerraformStack): void;
+    /**
+     * Create Jest Matchers for stack resources of a specific type
+     *
+     * This always runs TerraformStack.prepareStack() as this
+     * library heavily depends on it for pre-synth resource
+     * generation.
+     */
+    static resources(stack: TerraformStack, type: TerraformConstructor, options?: SynthOptions): jest.JestMatchers<object[]>;
+    /**
+     * Get stack resources by type
+     */
+    static resourceObjects(stack: TerraformStack, type: TerraformConstructor, options?: SynthOptions): object;
+    /**
+     * Create Jest Matchers for stack outputs of a specific type
+     *
+     * This always runs TerraformStack.prepareStack() as this
+     * library heavily depends on it for pre-synth resource
+     * generation.
+     */
+    static dataSources(stack: TerraformStack, type: TerraformConstructor, options?: SynthOptions): jest.JestMatchers<object[]>;
+    /**
+     * Create Jest Matchers for a specific stack output or
+     * throw an error if the output is not found
+     *
+     * This always runs TerraformStack.prepareStack() as this
+     * library heavily depends on it for pre-synth resource
+     * generation.
+     */
+    static expectOutput(stack: TerraformStack, outputName: string, options?: SynthOptions): jest.JestMatchers<object | undefined>;
+    private static getSynthString;
+    private readonly raw;
+    private readonly template;
+    constructor(stack: TerraformStack, options?: SynthOptions);
+    get expect(): jest.JestMatchers<any>;
+    toMatchObject(o: object): void;
+    get resource(): object | undefined;
+    /**
+     * Get an Object of resources by type,
+     * the key is the resource name and the value is the resource object
+     */
+    resourcesByType(type: TerraformConstructor): object;
+    /**
+     * Get an Array of resources by type, discarding the resource names
+     */
+    resourceTypeArray(type: TerraformConstructor): Array<object>;
+    /**
+     * Jest Matcher for resourceTypeArray
+     *
+     * shortcut for expect(template.resourceTypeArray(type))
+     */
+    expectResources(type: TerraformConstructor): jest.JestMatchers<any>;
+    resourceCountIs(type: TerraformConstructor, count: number): void;
+    resourceTypeArrayContaining(type: TerraformConstructor, object: any): void;
+    resourceTypeArrayNotContaining(type: TerraformConstructor, object: any): void;
+    get data(): object | undefined;
+    dataSourcesByType(type: TerraformConstructor): object;
+    /**
+     * Get an Array of datasources by type, discarding the resource names
+     */
+    dataSourceTypeArray(type: TerraformConstructor): Array<object>;
+    get output(): object | undefined;
+    outputByName(name: string): object | undefined;
+}
+export declare class Annotations {
+    private readonly annotations;
+    static fromStack(stack: TerraformStack): Annotations;
+    private constructor();
+    get warnings(): StackAnnotation[];
+    get errors(): StackAnnotation[];
+    /**
+     * check if the stack has a warning for certain context path and message
+     */
+    hasWarnings(...expectedWarnings: Array<Partial<StackAnnotationMatcher>>): void;
+    /**
+     * ensure the stack has no warning for certain context path and message
+     */
+    hasNoWarnings(...expectedWarnings: Array<Partial<StackAnnotationMatcher>>): void;
+    private warningMatcher;
+    /**
+     * check if the stack has an error for certain context path and message
+     */
+    hasErrors(...expectedErrors: Array<Partial<StackAnnotationMatcher>>): void;
+}
+export interface StackAnnotationMatcher {
+    constructPath: string | RegExp;
+    message: string | RegExp;
+}
+
+
+// ../../test-resource
+import { TerraformMetaArguments, TerraformResource } from "cdktf";
+import { Construct } from "constructs";
+export declare enum TestProviderMetadata {
+    TYPE = "test"
+}
+export interface TestResourceConfig extends TerraformMetaArguments {
+    readonly properties?: {
+        [name: string]: any;
+    };
+}
+export declare class TestResource extends TerraformResource {
+    static readonly tfResourceType: string;
+    constructor(scope: Construct, id: string, config: TestResourceConfig);
+    get names(): string[];
+    protected synthesizeAttributes(): {
+        [name: string]: any;
+    };
+}
+
+
+// ../../jest
+import { TerraformConstructor } from "../matchers";
+declare global {
+    namespace jest {
+        interface Matchers<R> {
+            toHaveResource(resourceConstructor: TerraformConstructor): R;
+            toHaveResourceWithProperties(resourceConstructor: TerraformConstructor, properties: Record<string, any>): R;
+            toHaveDataSource(dataSourceConstructor: TerraformConstructor): R;
+            toHaveDataSourceWithProperties(dataSourceConstructor: TerraformConstructor, properties: Record<string, any>): R;
+            toHaveProvider(providerConstructor: TerraformConstructor): R;
+            toHaveProviderWithProperties(providerConstructor: TerraformConstructor, properties: Record<string, any>): R;
+            toBeValidTerraform(): R;
+            toPlanSuccessfully(): R;
+        }
+    }
+}
+export declare function setupJest(): void;
+
+
+// ../../index
+import { App, TerraformStack } from "../../lib";
+import { IConstruct, Construct } from "constructs";
+export interface IScopeCallback {
+    (scope: Construct): void;
+}
+export interface TestingAppConfig {
+    readonly outdir?: string;
+    readonly stackTraces?: boolean;
+    readonly stubVersion?: boolean;
+    readonly enableFutureFlags?: boolean;
+    readonly fakeCdktfJsonPath?: boolean;
+}
+/**
+ * Testing utilities for cdktf applications.
+ */
+export declare class Testing {
+    /**
+     * Returns an app for testing with the following properties:
+     * - Output directory is a temp dir.
+     */
+    static app(options?: TestingAppConfig): App;
+    static stubVersion(app: App): App;
+    static fakeCdktfJsonPath(app: App): App;
+    static enableFutureFlags(app: App): App;
+    static synthScope(fn: IScopeCallback): string;
+    /**
+     * Returns the Terraform synthesized JSON.
+     */
+    static synth(stack: TerraformStack, runValidations?: boolean): string;
+    static fullSynth(stack: TerraformStack): string;
+    static renderConstructTree(construct: IConstruct): string;
+    static toHaveDataSourceWithProperties(received: string, resourceType: string, properties?: Record<string, any>): boolean;
+    static toHaveDataSource(received: string, resourceType: string): boolean;
+    static toHaveResourceWithProperties(received: string, resourceType: string, properties?: Record<string, any>): boolean;
+    static toHaveResource(received: string, resourceType: string): boolean;
+    static toHaveProviderWithProperties(received: string, resourceType: string, properties?: Record<string, any>): boolean;
+    static toHaveProvider(received: string, resourceType: string): boolean;
+    static toBeValidTerraform(received: string): boolean;
+    static setupJest(): void;
+}
+
+\`\`\`
+
+**TerraConstructs AWS Core Declarations**
+\`\`\`typescript
+// ../../../src/aws/arn
+import { IAwsStack } from "./aws-stack";
+/**
+ * An enum representing the various ARN formats that different services use.
+ */
+export declare enum ArnFormat {
+    /**
+     * This represents a format where there is no 'resourceName' part.
+     * This format is used for S3 resources,
+     * like 'arn:aws:s3:::bucket'.
+     * Everything after the last colon is considered the 'resource',
+     * even if it contains slashes,
+     * like in 'arn:aws:s3:::bucket/object.zip'.
+     */
+    NO_RESOURCE_NAME = "arn:aws:service:region:account:resource",
+    /**
+     * This represents a format where the 'resource' and 'resourceName'
+     * parts are separated with a colon.
+     * Like in: 'arn:aws:service:region:account:resource:resourceName'.
+     * Everything after the last colon is considered the 'resourceName',
+     * even if it contains slashes,
+     * like in 'arn:aws:apigateway:region:account:resource:/test/mydemoresource/*'.
+     */
+    COLON_RESOURCE_NAME = "arn:aws:service:region:account:resource:resourceName",
+    /**
+     * This represents a format where the 'resource' and 'resourceName'
+     * parts are separated with a slash.
+     * Like in: 'arn:aws:service:region:account:resource/resourceName'.
+     * Everything after the separating slash is considered the 'resourceName',
+     * even if it contains colons,
+     * like in 'arn:aws:cognito-sync:region:account:identitypool/us-east-1:1a1a1a1a-ffff-1111-9999-12345678:bla'.
+     */
+    SLASH_RESOURCE_NAME = "arn:aws:service:region:account:resource/resourceName",
+    /**
+     * This represents a format where the 'resource' and 'resourceName'
+     * parts are seperated with a slash,
+     * but there is also an additional slash after the colon separating 'account' from 'resource'.
+     * Like in: 'arn:aws:service:region:account:/resource/resourceName'.
+     * Note that the leading slash is _not_ included in the parsed 'resource' part.
+     */
+    SLASH_RESOURCE_SLASH_RESOURCE_NAME = "arn:aws:service:region:account:/resource/resourceName"
+}
+export interface ArnComponents {
+    /**
+     * The partition that the resource is in. For standard AWS regions, the
+     * partition is aws. If you have resources in other partitions, the
+     * partition is aws-partitionname. For example, the partition for resources
+     * in the China (Beijing) region is aws-cn.
+     *
+     * @default The AWS partition the stack is deployed to.
+     */
+    readonly partition?: string;
+    /**
+     * The service namespace that identifies the AWS product (for example,
+     * 's3', 'iam', 'codepipline').
+     */
+    readonly service: string;
+    /**
+     * The region the resource resides in. Note that the ARNs for some resources
+     * do not require a region, so this component might be omitted.
+     *
+     * @default The region the stack is deployed to.
+     */
+    readonly region?: string;
+    /**
+     * The ID of the AWS account that owns the resource, without the hyphens.
+     * For example, 123456789012. Note that the ARNs for some resources don't
+     * require an account number, so this component might be omitted.
+     *
+     * @default The account the stack is deployed to.
+     */
+    readonly account?: string;
+    /**
+     * Resource type (e.g. "table", "autoScalingGroup", "certificate").
+     * For some resource types, e.g. S3 buckets, this field defines the bucket name.
+     */
+    readonly resource: string;
+    /**
+     * Separator between resource type and the resource.
+     *
+     * Can be either '/', ':' or an empty string. Will only be used if resourceName is defined.
+     * @default '/'
+     *
+     * @deprecated use arnFormat instead
+     */
+    readonly sep?: string;
+    /**
+     * Resource name or path within the resource (i.e. S3 bucket object key) or
+     * a wildcard such as \`\`"*"\`\`. This is service-dependent.
+     */
+    readonly resourceName?: string;
+    /**
+     * The specific ARN format to use for this ARN value.
+     *
+     * @default - uses value of \`sep\` as the separator for formatting,
+     *   \`ArnFormat.SLASH_RESOURCE_NAME\` if that property was also notd
+     */
+    readonly arnFormat?: ArnFormat;
+}
+export declare class Arn {
+    /**
+     * Creates an ARN from components.
+     *
+     * If \`partition\`, \`region\` or \`account\` are not specified, the stack's
+     * partition, region and account will be used.
+     *
+     * If any component is the empty string, an empty string will be inserted
+     * into the generated ARN at the location that component corresponds to.
+     *
+     * The ARN will be formatted as follows:
+     *
+     *   arn:{partition}:{service}:{region}:{account}:{resource}{sep}{resource-name}
+     *
+     * The required ARN pieces that are omitted will be taken from the stack that
+     * the 'scope' is attached to. If all ARN pieces are supplied, the supplied scope
+     * can be 'undefined'.
+     */
+    static format(components: ArnComponents, stack?: IAwsStack): string;
+    /**
+     * Given an ARN, parses it and returns components.
+     *
+     * IF THE ARN IS A CONCRETE STRING...
+     *
+     * ...it will be parsed and validated. The separator (\`sep\`) will be set to '/'
+     * if the 6th component includes a '/', in which case, \`resource\` will be set
+     * to the value before the '/' and \`resourceName\` will be the rest. In case
+     * there is no '/', \`resource\` will be set to the 6th components and
+     * \`resourceName\` will be set to the rest of the string.
+     *
+     * IF THE ARN IS A TOKEN...
+     *
+     * ...it cannot be validated, since we don't have the actual value yet at the
+     * time of this function call. You will have to supply \`sepIfToken\` and
+     * whether or not ARNs of the expected format usually have resource names
+     * in order to parse it properly. The resulting \`ArnComponents\` object will
+     * contain tokens for the subexpressions of the ARN, not string literals.
+     *
+     * If the resource name could possibly contain the separator char, the actual
+     * resource name cannot be properly parsed. This only occurs if the separator
+     * char is '/', and happens for example for S3 object ARNs, IAM Role ARNs,
+     * IAM OIDC Provider ARNs, etc. To properly extract the resource name from a
+     * Tokenized ARN, you must know the resource type and call
+     * \`Arn.extractResourceName\`.
+     *
+     * @param arn The ARN to parse
+     * @param sepIfToken The separator used to separate resource from resourceName
+     * @param hasName Whether there is a name component in the ARN at all. For
+     * example, SNS Topics ARNs have the 'resource' component contain the topic
+     * name, and no 'resourceName' component.
+     *
+     * @returns an ArnComponents object which allows access to the various
+     * components of the ARN.
+     *
+     * @returns an ArnComponents object which allows access to the various
+     *      components of the ARN.
+     *
+     * @deprecated use split instead
+     */
+    static parse(arn: string, sepIfToken?: string, hasName?: boolean): ArnComponents;
+    /**
+     * Splits the provided ARN into its components.
+     * Works both if 'arn' is a string like 'arn:aws:s3:::bucket',
+     * and a Token representing a dynamic CloudFormation expression
+     * (in which case the returned components will also be dynamic CloudFormation expressions,
+     * encoded as Tokens).
+     *
+     * @param arn the ARN to split into its components
+     * @param arnFormat the expected format of 'arn' - depends on what format the service 'arn' represents uses
+     */
+    static split(arn: string, arnFormat: ArnFormat): ArnComponents;
+    /**
+     * Extract the full resource name from an ARN
+     *
+     * Necessary for resource names (paths) that may contain the separator, like
+     * \`arn:aws:iam::111111111111:role/path/to/role/name\`.
+     *
+     * Only works if we statically know the expected \`resourceType\` beforehand, since we're going
+     * to use that to split the string on ':<resourceType>/' (and take the right-hand side).
+     *
+     * We can't extract the 'resourceType' from the ARN at hand, because CloudFormation Expressions
+     * only allow literals in the 'separator' argument to \`{ Fn::Split }\`, and so it can't be
+     * \`{ Fn::Select: [5, { Fn::Split: [':', ARN] }}\`.
+     *
+     * Only necessary for ARN formats for which the type-name separator is \`/\`.
+     */
+    static extractResourceName(arn: string, resourceType: string): string;
+    private constructor();
+}
+
+
+// ../../../src/aws/aws-construct
+import { Construct } from "constructs";
+import { AwsStack } from "./aws-stack";
+import { TerraConstructBase, TerraConstructProps, ITerraConstruct } from "../construct-base";
+/**
+ * Represents the environment a given AwsConstruct lives in.
+ * Used as the return value for the \`IResource.env\` property.
+ */
+export interface AwsEnvironment {
+    /**
+     * The AWS partition that this resource belongs to.
+     */
+    readonly partition: string;
+    /**
+     * The AWS account ID that this resource belongs to.
+     */
+    readonly account: string;
+    /**
+     * The AWS region that this resource belongs to.
+     */
+    readonly region: string;
+}
+/**
+ * Represents an AWS resource similar to the AWS CDK \`Resource\` class but backed by CDKTF.
+ */
+export interface IAwsConstruct extends ITerraConstruct {
+    /**
+     * The stack into which this resource is constructed by the TerraConstruct.
+     */
+    readonly stack: AwsStack;
+    /**
+     * The environment this resource belongs to.
+     * For resources that are created and managed by the CDKTF
+     * (generally, those created by creating new class instances like Environment, EcsDeployment, etc.),
+     * this is always the same as the environment of the stack they belong to;
+     * however, for imported resources
+     * (those obtained from static methods like fromRoleArn, fromBucketName, etc.),
+     * that might be different than the stack they were imported into.
+     */
+    readonly env: AwsEnvironment;
+}
+/**
+ * Construction properties for \`Resource\`.
+ */
+export interface AwsConstructProps extends TerraConstructProps {
+    /**
+     * The AWS account ID this resource belongs to.
+     *
+     * @default - the resource is in the same account as the stack it belongs to
+     */
+    readonly account?: string;
+    /**
+     * The AWS region this resource belongs to.
+     *
+     * @default - the resource is in the same region as the stack it belongs to
+     */
+    readonly region?: string;
+    /**
+     * ARN to deduce region and account from
+     *
+     * The ARN is parsed and the account and region are taken from the ARN.
+     * This should be used for imported resources.
+     *
+     * Cannot be supplied together with either \`account\` or \`region\`.
+     *
+     * @default - take environment from \`account\`, \`region\` parameters, or use Stack environment.
+     */
+    readonly environmentFromArn?: string;
+}
+/**
+ * Represents an AWS resource similar to the AWS CDK \`Resource\` class but backed by CDKTF.
+ */
+export declare abstract class AwsConstructBase extends TerraConstructBase implements IAwsConstruct {
+    readonly stack: AwsStack;
+    readonly env: AwsEnvironment;
+    constructor(scope: Construct, id: string, props?: AwsConstructProps);
+}
+
+
+// ../../../src/aws/aws-stack
+import { provider } from "@cdktf/provider-aws";
+import { ResourceTerraformIterator } from "cdktf";
+import { Construct, IConstruct } from "constructs";
+import { ArnComponents, ArnFormat } from "./arn";
+import { AwsProviderConfig } from "./provider-config.generated";
+import { StackBaseProps, StackBase, IStack } from "../stack-base";
+export interface AwsStackProps extends StackBaseProps {
+    /**
+     * The AWS Provider configuration (without the alias field)
+     */
+    readonly providerConfig: AwsProviderConfig;
+}
+export interface IAwsStack extends IStack {
+    /**
+     * The AWS Region for the TerraConstruct
+     */
+    readonly region: string;
+    /**
+     * The AWS Account for the TerraConstruct
+     */
+    readonly account: string;
+    /**
+     * The AWS Partition for the TerraConstruct
+     */
+    readonly partition: string;
+    /**
+     * The service Principal Id for a specific service
+     *
+     * @param serviceName The service name to get the service principal ID for
+     * @param region The region to get the service principal ID for
+     */
+    servicePrincipalName(serviceName: string, region?: string): string;
+}
+/**
+ * A Terraform stack constrained to a single AWS Account/Region to simulate CFN behavior.
+ */
+export declare class AwsStack extends StackBase implements IAwsStack {
+    /**
+     * Return whether the given object is a Stack.
+     *
+     * attribute detection since as 'instanceof' potentially fails across Library releases.
+     */
+    static isAwsStack(x: any): x is AwsStack;
+    /**
+     * Looks up the first stack scope in which \`construct\` is defined. Fails if there is no stack up the tree or the stack is not an AwsStack.
+     * @param construct The construct to start the search from.
+     */
+    static ofAwsConstruct(construct: IConstruct): AwsStack;
+    private readonly lookup;
+    private regionalAwsProviders;
+    /**
+     * Cache these tokens for reliable comparisons.
+     *
+     * Every call for the same Token will produce a new unique string, no
+     * attempt is made to deduplicate. Token objects should cache the
+     * value themselves, if required.
+     *
+     * dataSource.getSTringattribute -> Token.asString -> tokenMap.registerString
+     * ref:
+     * - https://github.com/hashicorp/terraform-cdk/blob/v0.20.10/packages/cdktf/lib/terraform-data-source.ts#L68
+     * - https://github.com/hashicorp/terraform-cdk/blob/v0.20.10/packages/cdktf/lib/tokens/private/token-map.ts#L50-L66
+     */
+    private _accountIdToken;
+    private _paritionToken;
+    private _urlSuffixToken;
+    constructor(scope: Construct, id: string, props: AwsStackProps);
+    get provider(): provider.AwsProvider;
+    /**
+     * Get the Region of the AWS Stack
+     */
+    get region(): string;
+    private get dataAwsCallerIdentity();
+    private get dataAwsAvailabilityZones();
+    private get dataAwsPartition();
+    private getRegionalAwsProvider;
+    /**
+     * Get the Account of the AWS Stack
+     */
+    get account(): string;
+    /**
+     * Get the Partition of the AWS Stack
+     */
+    get partition(): string;
+    /**
+     * Base DNS domain name for the current partition (e.g., amazonaws.com in AWS Commercial, amazonaws.com.cn in AWS China).
+     */
+    get urlSuffix(): string;
+    /**
+     * Return the service principal name based on the region it's used in.
+     *
+     * Some service principal names used to be different for different partitions,
+     * and some were not.
+     *
+     * These days all service principal names are standardized, and they are all
+     * of the form \`<servicename>.amazonaws.com\`.
+     *
+     * To avoid breaking changes, handling is provided for services added with the formats below,
+     * however, no additional handling will be added for new regions or partitions.
+     *   - s3
+     *   - s3.amazonaws.com
+     *   - s3.amazonaws.com.cn
+     *   - s3.c2s.ic.gov
+     *   - s3.sc2s.sgov.gov
+     *
+     * @param service The service name to get the service principal ID for
+     * @param region The region to get the service principal ID for
+     */
+    servicePrincipalName(service: string, region?: string): string;
+    /**
+     * Creates an ARN from components.
+     *
+     * If \`partition\`, \`region\` or \`account\` are not specified, the stack's
+     * partition, region and account will be used.
+     *
+     * If any component is the empty string, an empty string will be inserted
+     * into the generated ARN at the location that component corresponds to.
+     *
+     * The ARN will be formatted as follows:
+     *
+     *   arn:{partition}:{service}:{region}:{account}:{resource}{sep}{resource-name}
+     *
+     * The required ARN pieces that are omitted will be taken from the stack that
+     * the 'scope' is attached to. If all ARN pieces are supplied, the supplied scope
+     * can be 'undefined'.
+     */
+    formatArn(components: ArnComponents): string;
+    /**
+     * Given an ARN, parses it and returns components.
+     *
+     * IF THE ARN IS A CONCRETE STRING...
+     *
+     * ...it will be parsed and validated. The separator (\`sep\`) will be set to '/'
+     * if the 6th component includes a '/', in which case, \`resource\` will be set
+     * to the value before the '/' and \`resourceName\` will be the rest. In case
+     * there is no '/', \`resource\` will be set to the 6th components and
+     * \`resourceName\` will be set to the rest of the string.
+     *
+     * IF THE ARN IS A TOKEN...
+     *
+     * ...it cannot be validated, since we don't have the actual value yet at the
+     * time of this function call. You will have to supply \`sepIfToken\` and
+     * whether or not ARNs of the expected format usually have resource names
+     * in order to parse it properly. The resulting \`ArnComponents\` object will
+     * contain tokens for the subexpressions of the ARN, not string literals.
+     *
+     * If the resource name could possibly contain the separator char, the actual
+     * resource name cannot be properly parsed. This only occurs if the separator
+     * char is '/', and happens for example for S3 object ARNs, IAM Role ARNs,
+     * IAM OIDC Provider ARNs, etc. To properly extract the resource name from a
+     * Tokenized ARN, you must know the resource type and call
+     * \`Arn.extractResourceName\`.
+     *
+     * @param arn The ARN string to parse
+     * @param sepIfToken The separator used to separate resource from resourceName
+     * @param hasName Whether there is a name component in the ARN at all. For
+     * example, SNS Topics ARNs have the 'resource' component contain the topic
+     * name, and no 'resourceName' component.
+     *
+     * @returns an ArnComponents object which allows access to the various
+     * components of the ARN.
+     *
+     * @returns an ArnComponents object which allows access to the various
+     *      components of the ARN.
+     *
+     * @deprecated use splitArn instead
+     */
+    parseArn(arn: string, sepIfToken?: string, hasName?: boolean): ArnComponents;
+    /**
+     * Splits the provided ARN into its components.
+     * Works both if 'arn' is a string like 'arn:aws:s3:::bucket',
+     * and a Token representing a dynamic CloudFormation expression
+     * (in which case the returned components will also be dynamic CloudFormation expressions,
+     * encoded as Tokens).
+     *
+     * @param arn the ARN to split into its components
+     * @param arnFormat the expected format of 'arn' - depends on what format the service 'arn' represents uses
+     */
+    splitArn(arn: string, arnFormat: ArnFormat): ArnComponents;
+    /**
+     * Returns iterator for all AZs that are available in the AWS environment
+     * (account/region) associated with this stack (default or aliased provider).
+     *
+     * this will return a cdktf iterator
+     *
+     * https://developer.hashicorp.com/terraform/cdktf/concepts/iterators#define-iterators
+     *
+     * To specify a different strategy for selecting availability zones override this method.
+     */
+    get availabilityZoneIterator(): ResourceTerraformIterator;
+    /**
+     * Returns a List of Tokens for AZ names available in the stack's
+     * AWS environment (account/region).
+     *
+     * The list length is \`maxCount\` which defaults to 2.
+     *
+     * @param maxCount the maximum number of AZs to return
+     */
+    availabilityZones(maxCount?: number): string[];
+}
+
+
+// ../../../src/aws/aws-tags
+import { IAspect } from "cdktf";
+import { IConstruct } from "constructs";
+import { TaggableConstruct } from "../construct-base";
+/**
+ * TaggableConstruct is a Construct that can have tags
+ */
+export declare function isTaggableConstruct(x: IConstruct): x is TaggableConstruct;
+/**
+ * Properties for a tag
+ */
+export interface TagProps {
+    /**
+     * An array of Resource Types that will not receive this tag
+     *
+     * An empty array will allow this tag to be applied to all resources. A
+     * non-empty array will apply this tag only if the Resource type is not in
+     * this array.
+     * @default []
+     */
+    readonly excludeResourceTypes?: string[];
+    /**
+     * An array of Resource Types that will receive this tag
+     *
+     * An empty array will match any Resource. A non-empty array will apply this
+     * tag only to Resource types that are included in this array.
+     * @default []
+     */
+    readonly includeResourceTypes?: string[];
+}
+/**
+ * CDKTF Aspect adding a single Key/Value Tag to all resources within a construct scope
+ *
+ * Add tags using \`Tags.of(scope).add(key, value)\`
+ */
+export declare class AwsTag implements IAspect {
+    private key;
+    private value;
+    private readonly props;
+    constructor(key: string, value: string, props?: TagProps);
+    visit(node: IConstruct): void;
+    private applyTagAspectHere;
+}
+/**
+ * Manages AWS tags for all resources within a construct scope.
+ */
+export declare class Tags {
+    private readonly scope;
+    /**
+     * Returns the tags API for this scope.
+     * @param scope The scope
+     */
+    static of(scope: IConstruct): Tags;
+    private constructor();
+    /**
+     * add tags to the node of a construct and all its the taggable children
+     */
+    add(key: string, value: string, props?: TagProps): void;
+}
+
+
+// ../../../src/aws/log-retention
+/**
+ * How long, in days, the log contents will be retained.
+ */
+export declare enum RetentionDays {
+    /**
+     * 1 day
+     */
+    ONE_DAY = 1,
+    /**
+     * 3 days
+     */
+    THREE_DAYS = 3,
+    /**
+     * 5 days
+     */
+    FIVE_DAYS = 5,
+    /**
+     * 1 week
+     */
+    ONE_WEEK = 7,
+    /**
+     * 2 weeks
+     */
+    TWO_WEEKS = 14,
+    /**
+     * 1 month
+     */
+    ONE_MONTH = 30,
+    /**
+     * 2 months
+     */
+    TWO_MONTHS = 60,
+    /**
+     * 3 months
+     */
+    THREE_MONTHS = 90,
+    /**
+     * 4 months
+     */
+    FOUR_MONTHS = 120,
+    /**
+     * 5 months
+     */
+    FIVE_MONTHS = 150,
+    /**
+     * 6 months
+     */
+    SIX_MONTHS = 180,
+    /**
+     * 1 year
+     */
+    ONE_YEAR = 365,
+    /**
+     * 13 months
+     */
+    THIRTEEN_MONTHS = 400,
+    /**
+     * 18 months
+     */
+    EIGHTEEN_MONTHS = 545,
+    /**
+     * 2 years
+     */
+    TWO_YEARS = 731,
+    /**
+     * 3 years
+     */
+    THREE_YEARS = 1096,
+    /**
+     * 5 years
+     */
+    FIVE_YEARS = 1827,
+    /**
+     * 6 years
+     */
+    SIX_YEARS = 2192,
+    /**
+     * 7 years
+     */
+    SEVEN_YEARS = 2557,
+    /**
+     * 8 years
+     */
+    EIGHT_YEARS = 2922,
+    /**
+     * 9 years
+     */
+    NINE_YEARS = 3288,
+    /**
+     * 10 years
+     */
+    TEN_YEARS = 3653,
+    /**
+     * Retain logs forever
+     */
+    INFINITE = 9999
+}
+
+
+// ../../../src/aws/provider-config.generated
+import type { IResolvable } from 'cdktf';
+import type { provider } from '@cdktf/provider-aws';
+/**
+ * Config for the AWS Provider
+ */
+export interface AwsProviderConfig {
+    /**
+     * Resolve an endpoint with FIPS capability.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#use_fips_endpoint AwsProvider#use_fips_endpoint}
+     * @stability stable
+     */
+    readonly useFipsEndpoint?: boolean | IResolvable;
+    /**
+     * Resolve an endpoint with DualStack capability.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#use_dualstack_endpoint AwsProvider#use_dualstack_endpoint}
+     * @stability stable
+     */
+    readonly useDualstackEndpoint?: boolean | IResolvable;
+    /**
+     * The capacity of the AWS SDK's token bucket rate limiter.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#token_bucket_rate_limiter_capacity AwsProvider#token_bucket_rate_limiter_capacity}
+     * @stability stable
+     */
+    readonly tokenBucketRateLimiterCapacity?: number;
+    /**
+     * session token. A session token is only required if you are using temporary security credentials.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#token AwsProvider#token}
+     * @stability stable
+     */
+    readonly token?: string;
+    /**
+     * The region where AWS STS operations will take place. Examples are us-east-1 and us-west-2.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#sts_region AwsProvider#sts_region}
+     * @stability stable
+     */
+    readonly stsRegion?: string;
+    /**
+     * Skip requesting the account ID. Used for AWS API implementations that do not have IAM/STS API and/or metadata API.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#skip_requesting_account_id AwsProvider#skip_requesting_account_id}
+     * @stability stable
+     */
+    readonly skipRequestingAccountId?: boolean | IResolvable;
+    /**
+     * Skip static validation of region name.
+     * Used by users of alternative AWS-like APIs or users w/ access to regions that are not public (yet).
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#skip_region_validation AwsProvider#skip_region_validation}
+     * @stability stable
+     */
+    readonly skipRegionValidation?: boolean | IResolvable;
+    /**
+     * Skip the AWS Metadata API check. Used for AWS API implementations that do not have a metadata api endpoint.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#skip_metadata_api_check AwsProvider#skip_metadata_api_check}
+     * @stability stable
+     */
+    readonly skipMetadataApiCheck?: string;
+    /**
+     * Skip the credentials validation via STS API. Used for AWS API implementations that do not have STS available/implemented.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#skip_credentials_validation AwsProvider#skip_credentials_validation}
+     * @stability stable
+     */
+    readonly skipCredentialsValidation?: boolean | IResolvable;
+    /**
+     * List of paths to shared credentials files. If not set, defaults to [~/.aws/credentials].
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#shared_credentials_files AwsProvider#shared_credentials_files}
+     * @stability stable
+     */
+    readonly sharedCredentialsFiles?: Array<string>;
+    /**
+     * List of paths to shared config files. If not set, defaults to [~/.aws/config].
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#shared_config_files AwsProvider#shared_config_files}
+     * @stability stable
+     */
+    readonly sharedConfigFiles?: Array<string>;
+    /**
+     * The secret key for API operations. You can retrieve this from the 'Security & Credentials' section of the AWS console.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#secret_key AwsProvider#secret_key}
+     * @stability stable
+     */
+    readonly secretKey?: string;
+    /**
+     * Set this to true to enable the request to use path-style addressing, i.e., https://s3.amazonaws.com/BUCKET/KEY. By default, the S3 client will use virtual hosted bucket addressing when possible (https://BUCKET.s3.amazonaws.com/KEY). Specific to the Amazon S3 service.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#s3_use_path_style AwsProvider#s3_use_path_style}
+     * @stability stable
+     */
+    readonly s3UsePathStyle?: boolean | IResolvable;
+    /**
+     * Specifies whether S3 API calls in the \`us-east-1\` region use the legacy global endpoint or a regional endpoint.
+     * Valid values are \`legacy\` or \`regional\`. Can also be configured using the \`AWS_S3_US_EAST_1_REGIONAL_ENDPOINT\` environment variable or the \`s3_us_east_1_regional_endpoint\` shared config file parameter
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#s3_us_east_1_regional_endpoint AwsProvider#s3_us_east_1_regional_endpoint}
+     * @stability stable
+     */
+    readonly s3UsEast1RegionalEndpoint?: string;
+    /**
+     * Specifies how retries are attempted.
+     * Valid values are \`standard\` and \`adaptive\`. Can also be configured using the \`AWS_RETRY_MODE\` environment variable.
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#retry_mode AwsProvider#retry_mode}
+     * @stability stable
+     */
+    readonly retryMode?: string;
+    /**
+     * The region where AWS operations will take place. Examples are us-east-1, us-west-2, etc.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#region AwsProvider#region}
+     * @stability stable
+     */
+    readonly region?: string;
+    /**
+     * The profile for API operations. If not set, the default profile created with \`aws configure\` will be used.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#profile AwsProvider#profile}
+     * @stability stable
+     */
+    readonly profile?: string;
+    /**
+     * Comma-separated list of hosts that should not use HTTP or HTTPS proxies.
+     * Can also be set using the \`NO_PROXY\` or \`no_proxy\` environment variables.
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#no_proxy AwsProvider#no_proxy}
+     * @stability stable
+     */
+    readonly noProxy?: string;
+    /**
+     * The maximum number of times an AWS API request is being executed.
+     * If the API request still fails, an error is
+     * thrown.
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#max_retries AwsProvider#max_retries}
+     * @stability stable
+     */
+    readonly maxRetries?: number;
+    /**
+     * Explicitly allow the provider to perform "insecure" SSL requests. If omitted, default value is \`false\`.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#insecure AwsProvider#insecure}
+     * @stability stable
+     */
+    readonly insecure?: boolean | IResolvable;
+    /**
+     * ignore_tags block.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#ignore_tags AwsProvider#ignore_tags}
+     * @stability stable
+     */
+    readonly ignoreTags?: IResolvable | Array<provider.AwsProviderIgnoreTags>;
+    /**
+     * URL of a proxy to use for HTTPS requests when accessing the AWS API.
+     * Can also be set using the \`HTTPS_PROXY\` or \`https_proxy\` environment variables.
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#https_proxy AwsProvider#https_proxy}
+     * @stability stable
+     */
+    readonly httpsProxy?: string;
+    /**
+     * URL of a proxy to use for HTTP requests when accessing the AWS API.
+     * Can also be set using the \`HTTP_PROXY\` or \`http_proxy\` environment variables.
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#http_proxy AwsProvider#http_proxy}
+     * @stability stable
+     */
+    readonly httpProxy?: string;
+    /**
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#forbidden_account_ids AwsProvider#forbidden_account_ids}.
+     * @stability stable
+     */
+    readonly forbiddenAccountIds?: Array<string>;
+    /**
+     * endpoints block.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#endpoints AwsProvider#endpoints}
+     * @stability stable
+     */
+    readonly endpoints?: IResolvable | Array<provider.AwsProviderEndpoints>;
+    /**
+     * Protocol to use with EC2 metadata service endpoint.Valid values are \`IPv4\` and \`IPv6\`. Can also be configured using the \`AWS_EC2_METADATA_SERVICE_ENDPOINT_MODE\` environment variable.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#ec2_metadata_service_endpoint_mode AwsProvider#ec2_metadata_service_endpoint_mode}
+     * @stability stable
+     */
+    readonly ec2MetadataServiceEndpointMode?: string;
+    /**
+     * Address of the EC2 metadata service endpoint to use. Can also be configured using the \`AWS_EC2_METADATA_SERVICE_ENDPOINT\` environment variable.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#ec2_metadata_service_endpoint AwsProvider#ec2_metadata_service_endpoint}
+     * @stability stable
+     */
+    readonly ec2MetadataServiceEndpoint?: string;
+    /**
+     * default_tags block.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#default_tags AwsProvider#default_tags}
+     * @stability stable
+     */
+    readonly defaultTags?: IResolvable | Array<provider.AwsProviderDefaultTags>;
+    /**
+     * File containing custom root and intermediate certificates.
+     * Can also be configured using the \`AWS_CA_BUNDLE\` environment variable. (Setting \`ca_bundle\` in the shared config file is not supported.)
+     *
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#custom_ca_bundle AwsProvider#custom_ca_bundle}
+     * @stability stable
+     */
+    readonly customCaBundle?: string;
+    /**
+     * assume_role_with_web_identity block.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#assume_role_with_web_identity AwsProvider#assume_role_with_web_identity}
+     * @stability stable
+     */
+    readonly assumeRoleWithWebIdentity?: IResolvable | Array<provider.AwsProviderAssumeRoleWithWebIdentity>;
+    /**
+     * assume_role block.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#assume_role AwsProvider#assume_role}
+     * @stability stable
+     */
+    readonly assumeRole?: IResolvable | Array<provider.AwsProviderAssumeRole>;
+    /**
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#allowed_account_ids AwsProvider#allowed_account_ids}.
+     * @stability stable
+     */
+    readonly allowedAccountIds?: Array<string>;
+    /**
+     * The access key for API operations. You can retrieve this from the 'Security & Credentials' section of the AWS console.
+     * Docs at Terraform Registry: {@link https://registry.terraform.io/providers/hashicorp/aws/5.88.0/docs#access_key AwsProvider#access_key}
+     * @stability stable
+     */
+    readonly accessKey?: string;
+}
+
+
+// ../../../src/aws/util
+/**
+ * Returns a copy of \`obj\` without \`undefined\` (or \`null\`) values in maps or arrays.
+ */
+export declare function filterUndefined(obj: any): any;
+
+\`\`\`
+
+## Steps
+
+1. **Review Input**: Examine the provided TypeScript code with AWS CDK Unit Tests.
+2. **Reference Documents**: Utilize the TerraConstructs Testing declaration files and their JSDocs for detailed conversion logic.
+3. **Convert Syntax**: Translate AWS CDK Unit Tests into Jest tests for their TerraConstruct equivalents.
+4. **Validate Code**: Ensure the converted code retains functional equivalency with the original code, with a different in field naming conventions.
+5. **Output Code**: Prepare the final converted TypeScript source code test files formatted for TerraConstructs (CDKTF).
+
+## Output Format
+
+- Generate a TypeScript source code test file (.test.ts) formatted for CDKTF.
+- Ensure the file is syntactically correct and ready for writing to disk.
+
+## Notes
+
+- Ensure all necessary imports and dependencies are correctly referenced for TerraConstructs.
+- Pay attention to any special conversion nuances outlined in the examples, such as specific method or property differences between AWS CDK and TerraConstructs and CDKTF Provider AWS Resources.
+- Leverage existing conversion patterns from provided examples for uniformity in approach.
+"
+`;
+
+exports[`generateNewPrompt > new prompt snapshot 1`] = `
+"Convert the following AWS CDK Construct Unit Tests to TerraConstructs Unit Tests.
+\`\`\`typescript
+import {
+  cloudwatchEventBus,
+  cloudwatchEventArchive,
+  cloudwatchEventBusPolicy,
+  dataAwsIamPolicyDocument,
+  kmsKey,
+  iamRolePolicy,
+} from "@cdktf/provider-aws";
+import {
+  Lazy,
+  TerraformMetaArguments,
+  TerraformOutput,
+  TerraformResource,
+  Testing,
+} from "cdktf";
+import "cdktf/lib/testing/adapters/jest";
+import { Construct } from "constructs";
+import { AwsStack, Arn } from "../../../src/aws";
+import * as kms from "../../../src/aws/encryption";
+import * as iam from "../../../src/aws/iam";
+import { EventBus } from "../../../src/aws/notify/event-bus";
+import { Template } from "../../assertions";
+
+const environmentName = "Test";
+const gridUUID = "123e4567-e89b-12d3";
+const providerConfig = { region: "us-east-1" };
+const gridBackendConfig = {
+  address: "http://localhost:3000",
+};
+
+describe("event bus", () => {
+  let stack: AwsStack;
+
+  beforeEach(() => {
+    const app = Testing.app();
+    stack = new AwsStack(app, "TestStack", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+  });
+
+  test("default event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus");
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+  });
+
+  test("default event bus with empty props object", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {});
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+  });
+
+  test("named event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "myEventBus",
+      }
+    );
+  });
+
+  // // TODO: Event Bus Description is not supported by terraform-provider-aws
+  // test("event bus with description", () => {
+  //   // GIVEN
+
+  //   // WHEN
+  //   new EventBus(stack, "myEventBus", {
+  //     description: "myEventBusDescription",
+  //   });
+
+  //   // THEN
+  //   Template.synth(stack).toHaveResourceWithProperties(
+  //     cloudwatchEventBus.CloudwatchEventBus,
+  //     {
+  //       description: "myEventBusDescription",
+  //     },
+  //   );
+  // });
+
+  test("partner event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {
+      eventSourceName: "aws.partner/PartnerName/acct1/repo1",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "aws.partner/PartnerName/acct1/repo1",
+        event_source_name: "aws.partner/PartnerName/acct1/repo1",
+      }
+    );
+  });
+
+  test("imported event bus", () => {
+    const eventBus = new EventBus(stack, "Bus");
+
+    const importEB = EventBus.fromEventBusArn(
+      stack,
+      "ImportBus",
+      eventBus.eventBusArn
+    );
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusArn1: eventBus.eventBusArn,
+        EventBusArn2: importEB.eventBusArn,
+      },
+    });
+
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusArn1: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+      EventBusArn2: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+    });
+  });
+
+  test("imported event bus from name", () => {
+    const eventBus = new EventBus(stack, "Bus", {
+      eventBusName: "test-bus-to-import-by-name",
+    });
+
+    const importEB = EventBus.fromEventBusName(
+      stack,
+      "ImportBus",
+      eventBus.eventBusName
+    );
+
+    // WHEN
+    expect(stack.resolve(eventBus.eventBusName)).toEqual(
+      stack.resolve(importEB.eventBusName)
+    );
+  });
+
+  test("same account imported event bus has right resource env", () => {
+    const eventBus = new EventBus(stack, "Bus");
+
+    const importEB = EventBus.fromEventBusArn(
+      stack,
+      "ImportBus",
+      eventBus.eventBusArn
+    );
+
+    // WHEN
+    expect(stack.resolve(importEB.env.account)).toEqual(
+      '\${element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 4)}'
+    );
+    expect(stack.resolve(importEB.env.region)).toEqual(
+      '\${element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 3)}'
+    );
+  });
+
+  test("cross account imported event bus has right resource env", () => {
+    const arnParts = {
+      resource: "bus",
+      service: "events",
+      account: "myAccount",
+      region: "us-west-1",
+    };
+
+    const arn = Arn.format(arnParts, stack);
+
+    const importEB = EventBus.fromEventBusArn(stack, "ImportBus", arn);
+
+    // WHEN
+    expect(importEB.env.account).toEqual(arnParts.account);
+    expect(importEB.env.region).toEqual(arnParts.region);
+  });
+
+  test("can get bus name", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusName: bus.eventBusName,
+      },
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusName: "\${aws_cloudwatch_event_bus.Bus_EA82B648.name}",
+    });
+  });
+
+  test("can get bus arn", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusArn: bus.eventBusArn,
+      },
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusArn: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+    });
+  });
+
+  test("event bus name cannot be default", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "default",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must not be 'default'/);
+  });
+
+  test("event bus name cannot contain slash", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "my/bus",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must not contain '\\/'/);
+  });
+
+  test("event bus cannot have name and source name", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "myBus",
+        eventSourceName: "myBus",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' and 'eventSourceName' cannot both be provided/);
+  });
+
+  test("event bus name cannot be empty string", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must satisfy: /);
+  });
+
+  test("does not throw if eventBusName is a token", () => {
+    // GIVEN
+
+    // WHEN / THEN
+    expect(
+      () =>
+        new EventBus(stack, "EventBus", {
+          eventBusName: Lazy.stringValue({
+            produce: () => "Example",
+          }),
+        })
+    ).not.toThrow();
+  });
+
+  test("event bus source name must follow pattern", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventSourceName: "invalid-partner",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventSourceName' must satisfy: \\/\\^aws/);
+  });
+
+  test("does not throw if eventSourceName is a token", () => {
+    // GIVEN
+
+    // WHEN / THEN
+    expect(
+      () =>
+        new EventBus(stack, "EventBus", {
+          eventSourceName: Lazy.stringValue({
+            produce: () => "Example",
+          }),
+        })
+    ).not.toThrow();
+  });
+
+  test("event bus source name cannot be empty string", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventSourceName: "",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventSourceName' must satisfy: /);
+  });
+
+  // TODO: Event Bus Description is not supported by terraform-provider-aws
+  // test("event bus description cannot be too long", () => {
+  //   // GIVEN
+  //   const tooLongDescription = "a".repeat(513);
+
+  //   // WHEN / THEN
+  //   expect(() => {
+  //     new EventBus(stack, "EventBusWithTooLongDescription", {
+  //       description: tooLongDescription,
+  //     });
+  //   }).toThrow(
+  //     "description must be less than or equal to 512 characters, got 513",
+  //   );
+  // });
+
+  // DEPRECATED
+  test("can grant PutEvents", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // WHEN
+    EventBus.grantPutEvents(role);
+
+    // THEN
+    Template.synth(stack).toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+
+  test("can grant PutEvents using grantAllPutEvents", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // WHEN
+    EventBus.grantAllPutEvents(role);
+
+    // THEN
+    Template.synth(stack).toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+
+  test("can grant PutEvents to a specific event bus", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    const eventBus = new EventBus(stack, "EventBus");
+
+    // WHEN
+    eventBus.grantPutEventsTo(role);
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: [stack.resolve(eventBus.eventBusArn)],
+          },
+        ],
+      }
+    );
+    t.expect.toHaveResourceWithProperties(iamRolePolicy.IamRolePolicy, {
+      name: "TestStackRoleDefaultPolicyC86B8D55",
+      policy:
+        "\${data.aws_iam_policy_document.Role_DefaultPolicy_2E5E5E0B.json}",
+      role: stack.resolve(role.roleName),
+    });
+  });
+
+  test("can archive events", () => {
+    // GIVEN
+
+    // WHEN
+    const event = new EventBus(stack, "Bus");
+
+    event.archive("MyArchive", {
+      eventPattern: {
+        account: [stack.account],
+      },
+      archiveName: "MyArchive",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventArchive.CloudwatchEventArchive,
+      {
+        description:
+          "Event Archive for \${aws_cloudwatch_event_bus.Bus_EA82B648.name} Event Bus",
+        event_pattern: {
+          account: ["\${data.aws_caller_identity.CallerIdentity.account_id}"],
+        },
+        event_source_arn: stack.resolve(event.eventBusArn), // "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+        name: "MyArchive",
+        retention_days: 0,
+      }
+    );
+  });
+
+  test("can archive events from an imported EventBus", () => {
+    // GIVEN
+
+    // WHEN
+    const bus = new EventBus(stack, "Bus");
+
+    const importedBus = EventBus.fromEventBusArn(
+      stack,
+      "ImportedBus",
+      bus.eventBusArn
+    );
+
+    importedBus.archive("MyArchive", {
+      eventPattern: {
+        account: [stack.account],
+      },
+      archiveName: "MyArchive",
+    });
+
+    // THEN
+    const t = new Template(stack);
+
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventArchive.CloudwatchEventArchive,
+      {
+        description:
+          'Event Archive for \${element(split("/", element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 5)), 1)} Event Bus',
+        event_pattern: {
+          account: ["\${data.aws_caller_identity.CallerIdentity.account_id}"],
+        },
+        event_source_arn: stack.resolve(bus.eventBusArn),
+        name: "MyArchive",
+        retention_days: 0,
+      }
+    );
+  });
+
+  test("cross account event bus uses generated physical name", () => {
+    // GIVEN
+    // env: {
+    //   account: "11111111111",
+    //   region: "us-east-1",
+    // },
+    const stack1 = new AwsStack(Testing.app(), "Stack1", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+    // env: {
+    //   account: "22222222222",
+    //   region: "us-east-1",
+    // },
+    const stack2 = new AwsStack(Testing.app(), "Stack2", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+
+    // WHEN
+    const bus1 = new EventBus(stack1, "Bus", {
+      eventBusName: Lazy.stringValue({
+        produce: () => "stack1bus",
+      }), // PhysicalName.GENERATE_IF_NEEDED,
+    });
+
+    new TerraformOutput(stack2, "BusName", { value: bus1.eventBusName });
+
+    // THEN
+    Template.synth(stack1).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "stack1bus",
+        // Name: "stack1stack1busca19bdf8ab2e51b62a5a",
+      }
+    );
+  });
+
+  test("can add one event bus policy", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    // WHEN
+    bus.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AccountPrincipal("111111111111111")],
+        actions: ["events:PutEvents"],
+        sid: "123",
+        resources: [bus.eventBusArn],
+      })
+    );
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBusPolicy.CloudwatchEventBusPolicy,
+      {
+        event_bus_name: "\${aws_cloudwatch_event_bus.Bus_EA82B648.name}",
+        policy:
+          "\${data.aws_iam_policy_document.Bus_Policy_Document_ABBD772C.json}",
+      }
+    );
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            sid: "123",
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "arn:\${data.aws_partition.Partitition.partition}:iam::111111111111111:root",
+                ],
+                type: "AWS",
+              },
+            ],
+            resources: [stack.resolve(bus.eventBusArn)],
+          },
+        ],
+      }
+    );
+  });
+
+  // TODO: TerraConstructs aggregates all statements in a single policy document...
+  test.skip("can add more than one event bus policy", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    const statement1 = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ArnPrincipal("arn")],
+      actions: ["events:PutEvents"],
+      sid: "statement1",
+      resources: [bus.eventBusArn],
+    });
+
+    const statement2 = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ArnPrincipal("arn")],
+      actions: ["events:DeleteRule"],
+      sid: "statement2",
+      resources: [bus.eventBusArn],
+    });
+
+    // WHEN
+    const add1 = bus.addToResourcePolicy(statement1);
+    const add2 = bus.addToResourcePolicy(statement2);
+
+    // THEN
+    expect(add1.statementAdded).toBe(true);
+    expect(add2.statementAdded).toBe(true);
+    const t = new Template(stack);
+    t.resourceCountIs(cloudwatchEventBusPolicy.CloudwatchEventBusPolicy, 2);
+  });
+
+  // TODO: TerraConstructs does not error when sid is not provided
+  test.skip("Event Bus policy statements must have a sid", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    // THEN
+    expect(() =>
+      bus.addToResourcePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          principals: [new iam.ArnPrincipal("arn")],
+          actions: ["events:PutEvents"],
+        })
+      )
+    ).toThrow("Event Bus policy statements must have a sid");
+  });
+
+  // TODO: Event Bus DQL is not supported by terraform-provider-aws
+  // test("set dead letter queue", () => {
+  //   const dlq = new sqs.Queue(stack, "DLQ");
+  //   new EventBus(stack, "Bus", {
+  //     deadLetterQueue: dlq,
+  //   });
+
+  //   Template.synth(stack).toHaveResourceWithProperties(
+  //     cloudwatchEventBus.CloudwatchEventBus,
+  //     {
+  //       DeadLetterConfig: {
+  //         Arn: {
+  //           "Fn::GetAtt": ["DLQ581697C4", "Arn"],
+  //         },
+  //       },
+  //     },
+  //   );
+  // });
+
+  test("Event Bus with a customer managed key", () => {
+    // GIVEN
+    const key = new kms.Key(stack, "Key");
+
+    // WHEN
+    const eventBus = new EventBus(stack, "Bus", {
+      kmsKey: key,
+    });
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        kms_key_identifier: stack.resolve(key.keyArn),
+      }
+    );
+
+    t.expect.toHaveResourceWithProperties(kmsKey.KmsKey, {
+      policy: "\${data.aws_iam_policy_document.Key_Policy_48E51E45.json}",
+    });
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["kms:*"],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "arn:\${data.aws_partition.Partitition.partition}:iam::\${data.aws_caller_identity.CallerIdentity.account_id}:root",
+                ],
+                type: "AWS",
+              },
+            ],
+            resources: ["*"],
+          },
+          {
+            actions: ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
+            condition: [
+              {
+                test: "StringEquals",
+                values: [
+                  "\${data.aws_caller_identity.CallerIdentity.account_id}",
+                ],
+                variable: "aws:SourceAccount",
+              },
+              {
+                test: "StringEquals",
+                values: [
+                  "arn:\${data.aws_partition.Partitition.partition}:events:us-east-1:\${data.aws_caller_identity.CallerIdentity.account_id}:event-bus/TestStackBus54CCAD7F",
+                ],
+                variable: "aws:SourceArn",
+              },
+              {
+                test: "StringEquals",
+                values: [
+                  "arn:\${data.aws_partition.Partitition.partition}:events:us-east-1:\${data.aws_caller_identity.CallerIdentity.account_id}:event-bus/TestStackBus54CCAD7F",
+                ],
+                variable: "kms:EncryptionContext:aws:events:event-bus:arn",
+              },
+            ],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "\${data.aws_service_principal.aws_svcp_default_region_events.name}",
+                ],
+                type: "Service",
+              },
+            ],
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+});
+
+export enum TestProviderMetadata {
+  TYPE = "test",
+}
+export interface TestResourceConfig extends TerraformMetaArguments {
+  readonly properties?: { [name: string]: any };
+}
+export class TestResource extends TerraformResource {
+  public static readonly tfResourceType: string = "test_resource";
+
+  /**
+   * AWS CloudFormation resource properties.
+   *
+   * This object is returned via cfnProperties
+   * @internal
+   */
+  protected readonly _properties: any;
+  constructor(scope: Construct, id: string, config: TestResourceConfig) {
+    super(scope, id, {
+      terraformResourceType: "test_resource",
+      terraformGeneratorMetadata: {
+        providerName: TestProviderMetadata.TYPE,
+        providerVersionConstraint: "~> 2.0",
+      },
+      provider: config.provider,
+      dependsOn: config.dependsOn,
+      count: config.count,
+      lifecycle: config.lifecycle,
+      provisioners: config.provisioners,
+      forEach: config.forEach,
+    });
+    this._properties = config.properties || {};
+  }
+
+  public get names(): string[] {
+    return this.getListAttribute("names");
+  }
+
+  protected synthesizeAttributes(): { [name: string]: any } {
+    return this._properties;
+  }
+}
+
+\`\`\`
+
+## Reference Documents
+
+**AWS CDK Tested Construct Type Declarations:**
+Refer to the following Reference declarations used by the AWSCDK constructs:
+\`\`\`typescript
+// event-bus.d.ts
+import { Construct } from 'constructs';
+import { Archive, BaseArchiveProps } from './archive';
+import * as iam from '../../aws-iam';
+import * as kms from '../../aws-kms';
+import * as sqs from '../../aws-sqs';
+import { IResource, Resource } from '../../core';
+/**
+ * Interface which all EventBus based classes MUST implement
+ */
+export interface IEventBus extends IResource {
+    /**
+     * The physical ID of this event bus resource
+     *
+     * @attribute
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-name
+     */
+    readonly eventBusName: string;
+    /**
+     * The ARN of this event bus resource
+     *
+     * @attribute
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Arn-fn::getatt
+     */
+    readonly eventBusArn: string;
+    /**
+     * The JSON policy of this event bus resource
+     *
+     * @attribute
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Policy-fn::getatt
+     */
+    readonly eventBusPolicy: string;
+    /**
+     * The partner event source to associate with this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-eventsourcename
+     */
+    readonly eventSourceName?: string;
+    /**
+     * Create an EventBridge archive to send events to.
+     * When you create an archive, incoming events might not immediately start being sent to the archive.
+     * Allow a short period of time for changes to take effect.
+     *
+     * @param props Properties of the archive
+     */
+    archive(id: string, props: BaseArchiveProps): Archive;
+    /**
+     * Grants an IAM Principal to send custom events to the eventBus
+     * so that they can be matched to rules.
+     *
+     * @param grantee The principal (no-op if undefined)
+     */
+    grantPutEventsTo(grantee: iam.IGrantable): iam.Grant;
+}
+/**
+ * Properties to define an event bus
+ */
+export interface EventBusProps {
+    /**
+     * The name of the event bus you are creating
+     * Note: If 'eventSourceName' is passed in, you cannot set this
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-name
+     * @default - automatically generated name
+     */
+    readonly eventBusName?: string;
+    /**
+     * The partner event source to associate with this event bus resource
+     * Note: If 'eventBusName' is passed in, you cannot set this
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-eventsourcename
+     * @default - no partner event source
+     */
+    readonly eventSourceName?: string;
+    /**
+     * Dead-letter queue for the event bus
+     *
+     * @see https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-event-delivery.html#eb-rule-dlq
+     *
+     * @default - no dead-letter queue
+     */
+    readonly deadLetterQueue?: sqs.IQueue;
+    /**
+     * The event bus description.
+     *
+     * The description can be up to 512 characters long.
+     *
+     * @see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-description
+     *
+     * @default - no description
+     */
+    readonly description?: string;
+    /**
+     * The customer managed key that encrypt events on this event bus.
+     *
+     * @default - Use an AWS managed key
+     */
+    readonly kmsKey?: kms.IKey;
+}
+/**
+ * Interface with properties necessary to import a reusable EventBus
+ */
+export interface EventBusAttributes {
+    /**
+     * The physical ID of this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-name
+     */
+    readonly eventBusName: string;
+    /**
+     * The ARN of this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Arn-fn::getatt
+     */
+    readonly eventBusArn: string;
+    /**
+     * The JSON policy of this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Policy-fn::getatt
+     */
+    readonly eventBusPolicy: string;
+    /**
+     * The partner event source to associate with this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-eventsourcename
+     * @default - no partner event source
+     */
+    readonly eventSourceName?: string;
+}
+declare abstract class EventBusBase extends Resource implements IEventBus {
+    /**
+     * The physical ID of this event bus resource
+     */
+    abstract readonly eventBusName: string;
+    /**
+     * The ARN of the event bus, such as:
+     * arn:aws:events:us-east-2:123456789012:event-bus/aws.partner/PartnerName/acct1/repo1.
+     */
+    abstract readonly eventBusArn: string;
+    /**
+     * The policy for the event bus in JSON form.
+     */
+    abstract readonly eventBusPolicy: string;
+    /**
+     * The name of the partner event source
+     */
+    abstract readonly eventSourceName?: string;
+    archive(id: string, props: BaseArchiveProps): Archive;
+    grantPutEventsTo(grantee: iam.IGrantable): iam.Grant;
+}
+/**
+ * Define an EventBridge EventBus
+ *
+ * @resource AWS::Events::EventBus
+ */
+export declare class EventBus extends EventBusBase {
+    /**
+     * Import an existing event bus resource
+     * @param scope Parent construct
+     * @param id Construct ID
+     * @param eventBusArn ARN of imported event bus
+     */
+    static fromEventBusArn(scope: Construct, id: string, eventBusArn: string): IEventBus;
+    /**
+     * Import an existing event bus resource
+     * @param scope Parent construct
+     * @param id Construct ID
+     * @param eventBusName Name of imported event bus
+     */
+    static fromEventBusName(scope: Construct, id: string, eventBusName: string): IEventBus;
+    /**
+     * Import an existing event bus resource
+     * @param scope Parent construct
+     * @param id Construct ID
+     * @param attrs Imported event bus properties
+     */
+    static fromEventBusAttributes(scope: Construct, id: string, attrs: EventBusAttributes): IEventBus;
+    /**
+     * Permits an IAM Principal to send custom events to EventBridge
+     * so that they can be matched to rules.
+     *
+     * @param grantee The principal (no-op if undefined)
+     */
+    static grantAllPutEvents(grantee: iam.IGrantable): iam.Grant;
+    private static eventBusProps;
+    /**
+     * The physical ID of this event bus resource
+     */
+    readonly eventBusName: string;
+    /**
+     * The ARN of the event bus, such as:
+     * arn:aws:events:us-east-2:123456789012:event-bus/aws.partner/PartnerName/acct1/repo1.
+     */
+    readonly eventBusArn: string;
+    /**
+     * The policy for the event bus in JSON form.
+     */
+    readonly eventBusPolicy: string;
+    /**
+     * The name of the partner event source
+     */
+    readonly eventSourceName?: string;
+    constructor(scope: Construct, id: string, props?: EventBusProps);
+    /**
+     * Adds a statement to the IAM resource policy associated with this event bus.
+     */
+    addToResourcePolicy(statement: iam.PolicyStatement): iam.AddToResourcePolicyResult;
+}
+/**
+ * Properties to associate Event Buses with a policy
+ */
+export interface EventBusPolicyProps {
+    /**
+     * The event bus to which the policy applies
+     */
+    readonly eventBus: IEventBus;
+    /**
+     * An IAM Policy Statement to apply to the Event Bus
+     */
+    readonly statement: iam.PolicyStatement;
+    /**
+     * An identifier string for the external account that
+     * you are granting permissions to.
+     */
+    readonly statementId: string;
+}
+/**
+ * The policy for an Event Bus
+ *
+ * Policies define the operations that are allowed on this resource.
+ *
+ * You almost never need to define this construct directly.
+ *
+ * All AWS resources that support resource policies have a method called
+ * \`addToResourcePolicy()\`, which will automatically create a new resource
+ * policy if one doesn't exist yet, otherwise it will add to the existing
+ * policy.
+ *
+ * Prefer to use \`addToResourcePolicy()\` instead.
+ */
+export declare class EventBusPolicy extends Resource {
+    constructor(scope: Construct, id: string, props: EventBusPolicyProps);
+}
+export {};
+
+\`\`\`
+
+**Target documentations:**
+Ensure generated configurations are tested to follow the following documentation
+
+------------------------
+// r
+---
+subcategory: "EventBridge"
+layout: "aws"
+page_title: "AWS: aws_cloudwatch_event_bus"
+description: |-
+  Provides an EventBridge event bus resource.
+---
+
+### Resource: aws_cloudwatch_event_bus
+
+Provides an EventBridge event bus resource.
+
+~> **Note:** EventBridge was formerly known as CloudWatch Events. The functionality is identical.
+
+#### Example Usage
+
+\`\`\`terraform
+resource "aws_cloudwatch_event_bus" "messenger" {
+  name = "chat-messages"
+}
+\`\`\`
+
+\`\`\`terraform
+data "aws_cloudwatch_event_source" "examplepartner" {
+  name_prefix = "aws.partner/examplepartner.com"
+}
+
+resource "aws_cloudwatch_event_bus" "examplepartner" {
+  name              = data.aws_cloudwatch_event_source.examplepartner.name
+  description       = "Event bus for example partner events"
+  event_source_name = data.aws_cloudwatch_event_source.examplepartner.name
+}
+\`\`\`
+
+#### Argument Reference
+
+This resource supports the following arguments:
+
+The following arguments are required:
+
+* \`name\` - (Required) Name of the new event bus. The names of custom event buses can't contain the / character. To create a partner event bus, ensure that the \`name\` matches the \`event_source_name\`.
+
+The following arguments are optional:
+
+* \`description\` - (Optional) Event bus description.
+* \`event_source_name\` - (Optional) Partner event source that the new event bus will be matched with. Must match \`name\`.
+* \`kms_key_identifier\` - (Optional) Identifier of the AWS KMS customer managed key for EventBridge to use, if you choose to use a customer managed key to encrypt events on this event bus. The identifier can be the key Amazon Resource Name (ARN), KeyId, key alias, or key alias ARN.
+* \`tags\` - (Optional) Map of tags assigned to the resource. If configured with a provider [\`default_tags\` configuration block](/docs/providers/aws/index.html#default_tags-configuration-block) present, tags with matching keys will overwrite those defined at the provider-level.
+
+#### Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* \`arn\` - ARN of the event bus.
+* \`id\` - Name of the event bus.
+* \`tags_all\` - Map of tags assigned to the resource, including those inherited from the provider [\`default_tags\` configuration block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#default_tags-configuration-block).
+
+#### Import
+
+In Terraform v1.5.0 and later, use an [\`import\` block](https://developer.hashicorp.com/terraform/language/import) to import EventBridge event buses using the \`name\` (which can also be a partner event source name). For example:
+
+\`\`\`terraform
+import {
+  to = aws_cloudwatch_event_bus.messenger
+  id = "chat-messages"
+}
+\`\`\`
+
+Using \`terraform import\`, import EventBridge event buses using the name of the event bus (which can also be a partner event source name). For example:
+
+\`\`\`console
+% terraform import aws_cloudwatch_event_bus.messenger chat-messages
+\`\`\`
+
+
+// r
+---
+subcategory: "EventBridge"
+layout: "aws"
+page_title: "AWS: aws_cloudwatch_event_bus_policy"
+description: |-
+  Provides a resource to create an EventBridge policy to support cross-account events.
+---
+
+### Resource: aws_cloudwatch_event_bus_policy
+
+Provides a resource to create an EventBridge resource policy to support cross-account events.
+
+~> **Note:** EventBridge was formerly known as CloudWatch Events. The functionality is identical.
+
+~> **Note:** The EventBridge bus policy resource  (\`aws_cloudwatch_event_bus_policy\`) is incompatible with the EventBridge permission resource (\`aws_cloudwatch_event_permission\`) and will overwrite permissions.
+
+#### Example Usage
+
+##### Account Access
+
+\`\`\`hcl
+data "aws_iam_policy_document" "test" {
+  statement {
+    sid    = "DevAccountAccess"
+    effect = "Allow"
+    actions = [
+      "events:PutEvents",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["123456789012"]
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_bus_policy" "test" {
+  policy         = data.aws_iam_policy_document.test.json
+  event_bus_name = aws_cloudwatch_event_bus.test.name
+}
+\`\`\`
+
+##### Organization Access
+
+\`\`\`hcl
+data "aws_iam_policy_document" "test" {
+  statement {
+    sid    = "OrganizationAccess"
+    effect = "Allow"
+    actions = [
+      "events:DescribeRule",
+      "events:ListRules",
+      "events:ListTargetsByRule",
+      "events:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:rule/*",
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [aws_organizations_organization.example.id]
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_bus_policy" "test" {
+  policy         = data.aws_iam_policy_document.test.json
+  event_bus_name = aws_cloudwatch_event_bus.test.name
+}
+\`\`\`
+
+##### Multiple Statements
+
+\`\`\`hcl
+data "aws_iam_policy_document" "test" {
+
+  statement {
+    sid    = "DevAccountAccess"
+    effect = "Allow"
+    actions = [
+      "events:PutEvents",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["123456789012"]
+    }
+  }
+
+  statement {
+    sid    = "OrganizationAccess"
+    effect = "Allow"
+    actions = [
+      "events:DescribeRule",
+      "events:ListRules",
+      "events:ListTargetsByRule",
+      "events:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:rule/*",
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [aws_organizations_organization.example.id]
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_bus_policy" "test" {
+  policy         = data.aws_iam_policy_document.test.json
+  event_bus_name = aws_cloudwatch_event_bus.test.name
+}
+\`\`\`
+
+#### Argument Reference
+
+This resource supports the following arguments:
+
+* \`policy\` - (Required) The text of the policy. For more information about building AWS IAM policy documents with Terraform, see the [AWS IAM Policy Document Guide](https://learn.hashicorp.com/terraform/aws/iam-policy).
+* \`event_bus_name\` - (Optional) The name of the event bus to set the permissions on.
+  If you omit this, the permissions are set on the \`default\` event bus.
+
+#### Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* \`id\` - The name of the EventBridge event bus.
+
+#### Import
+
+In Terraform v1.5.0 and later, use an [\`import\` block](https://developer.hashicorp.com/terraform/language/import) to import an EventBridge policy using the \`event_bus_name\`. For example:
+
+\`\`\`terraform
+import {
+  to = aws_cloudwatch_event_bus_policy.DevAccountAccess
+  id = "example-event-bus"
+}
+\`\`\`
+
+Using \`terraform import\`, import an EventBridge policy using the \`event_bus_name\`. For example:
+
+\`\`\`console
+% terraform import aws_cloudwatch_event_bus_policy.DevAccountAccess example-event-bus
+\`\`\`
+
+
+// r
+---
+subcategory: "EventBridge"
+layout: "aws"
+page_title: "AWS: aws_cloudwatch_event_permission"
+description: |-
+  Provides a resource to create an EventBridge permission to support cross-account events in the current account default event bus.
+---
+
+### Resource: aws_cloudwatch_event_permission
+
+Provides a resource to create an EventBridge permission to support cross-account events in the current account default event bus.
+
+~> **Note:** EventBridge was formerly known as CloudWatch Events. The functionality is identical.
+
+~> **Note:** The EventBridge bus policy resource  (\`aws_cloudwatch_event_bus_policy\`) is incompatible with the EventBridge permission resource (\`aws_cloudwatch_event_permission\`) and will overwrite permissions.
+
+#### Example Usage
+
+##### Account Access
+
+\`\`\`terraform
+resource "aws_cloudwatch_event_permission" "DevAccountAccess" {
+  principal    = "123456789012"
+  statement_id = "DevAccountAccess"
+}
+\`\`\`
+
+##### Organization Access
+
+\`\`\`terraform
+resource "aws_cloudwatch_event_permission" "OrganizationAccess" {
+  principal    = "*"
+  statement_id = "OrganizationAccess"
+
+  condition {
+    key   = "aws:PrincipalOrgID"
+    type  = "StringEquals"
+    value = aws_organizations_organization.example.id
+  }
+}
+\`\`\`
+
+#### Argument Reference
+
+This resource supports the following arguments:
+
+* \`principal\` - (Required) The 12-digit AWS account ID that you are permitting to put events to your default event bus. Specify \`*\` to permit any account to put events to your default event bus, optionally limited by \`condition\`.
+* \`statement_id\` - (Required) An identifier string for the external account that you are granting permissions to.
+* \`action\` - (Optional) The action that you are enabling the other account to perform. Defaults to \`events:PutEvents\`.
+* \`condition\` - (Optional) Configuration block to limit the event bus permissions you are granting to only accounts that fulfill the condition. Specified below.
+* \`event_bus_name\` - (Optional) The name of the event bus to set the permissions on.
+  If you omit this, the permissions are set on the \`default\` event bus.
+
+##### condition
+
+* \`key\` - (Required) Key for the condition. Valid values: \`aws:PrincipalOrgID\`.
+* \`type\` - (Required) Type of condition. Value values: \`StringEquals\`.
+* \`value\` - (Required) Value for the key.
+
+#### Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* \`id\` - The statement ID of the EventBridge permission.
+
+#### Import
+
+In Terraform v1.5.0 and later, use an [\`import\` block](https://developer.hashicorp.com/terraform/language/import) to import EventBridge permissions using the \`event_bus_name/statement_id\` (if you omit \`event_bus_name\`, the \`default\` event bus will be used). For example:
+
+\`\`\`terraform
+import {
+  to = aws_cloudwatch_event_permission.DevAccountAccess
+  id = "example-event-bus/DevAccountAccess"
+}
+\`\`\`
+
+Using \`terraform import\`, import EventBridge permissions using the \`event_bus_name/statement_id\` (if you omit \`event_bus_name\`, the \`default\` event bus will be used). For example:
+
+\`\`\`console
+% terraform import aws_cloudwatch_event_permission.DevAccountAccess example-event-bus/DevAccountAccess
+\`\`\`
+
+------------------------
+
+Format:
+{
+    "code": "converted code"
+}"
+`;
+
+exports[`generateSampleInput > sample input prompt snapshot 1`] = `
+"Convert the following AWS CDK Construct Unit Tests to TerraConstructs Unit Tests.
+\`\`\`typescript
+import {
+  cloudwatchEventBus,
+  cloudwatchEventArchive,
+  cloudwatchEventBusPolicy,
+  dataAwsIamPolicyDocument,
+  kmsKey,
+  iamRolePolicy,
+} from "@cdktf/provider-aws";
+import {
+  Lazy,
+  TerraformMetaArguments,
+  TerraformOutput,
+  TerraformResource,
+  Testing,
+} from "cdktf";
+import "cdktf/lib/testing/adapters/jest";
+import { Construct } from "constructs";
+import { AwsStack, Arn } from "../../../src/aws";
+import * as kms from "../../../src/aws/encryption";
+import * as iam from "../../../src/aws/iam";
+import { EventBus } from "../../../src/aws/notify/event-bus";
+import { Template } from "../../assertions";
+
+const environmentName = "Test";
+const gridUUID = "123e4567-e89b-12d3";
+const providerConfig = { region: "us-east-1" };
+const gridBackendConfig = {
+  address: "http://localhost:3000",
+};
+
+describe("event bus", () => {
+  let stack: AwsStack;
+
+  beforeEach(() => {
+    const app = Testing.app();
+    stack = new AwsStack(app, "TestStack", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+  });
+
+  test("default event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus");
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+  });
+
+  test("default event bus with empty props object", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {});
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+  });
+
+  test("named event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "myEventBus",
+      }
+    );
+  });
+
+  // // TODO: Event Bus Description is not supported by terraform-provider-aws
+  // test("event bus with description", () => {
+  //   // GIVEN
+
+  //   // WHEN
+  //   new EventBus(stack, "myEventBus", {
+  //     description: "myEventBusDescription",
+  //   });
+
+  //   // THEN
+  //   Template.synth(stack).toHaveResourceWithProperties(
+  //     cloudwatchEventBus.CloudwatchEventBus,
+  //     {
+  //       description: "myEventBusDescription",
+  //     },
+  //   );
+  // });
+
+  test("partner event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {
+      eventSourceName: "aws.partner/PartnerName/acct1/repo1",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "aws.partner/PartnerName/acct1/repo1",
+        event_source_name: "aws.partner/PartnerName/acct1/repo1",
+      }
+    );
+  });
+
+  test("imported event bus", () => {
+    const eventBus = new EventBus(stack, "Bus");
+
+    const importEB = EventBus.fromEventBusArn(
+      stack,
+      "ImportBus",
+      eventBus.eventBusArn
+    );
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusArn1: eventBus.eventBusArn,
+        EventBusArn2: importEB.eventBusArn,
+      },
+    });
+
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusArn1: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+      EventBusArn2: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+    });
+  });
+
+  test("imported event bus from name", () => {
+    const eventBus = new EventBus(stack, "Bus", {
+      eventBusName: "test-bus-to-import-by-name",
+    });
+
+    const importEB = EventBus.fromEventBusName(
+      stack,
+      "ImportBus",
+      eventBus.eventBusName
+    );
+
+    // WHEN
+    expect(stack.resolve(eventBus.eventBusName)).toEqual(
+      stack.resolve(importEB.eventBusName)
+    );
+  });
+
+  test("same account imported event bus has right resource env", () => {
+    const eventBus = new EventBus(stack, "Bus");
+
+    const importEB = EventBus.fromEventBusArn(
+      stack,
+      "ImportBus",
+      eventBus.eventBusArn
+    );
+
+    // WHEN
+    expect(stack.resolve(importEB.env.account)).toEqual(
+      '\${element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 4)}'
+    );
+    expect(stack.resolve(importEB.env.region)).toEqual(
+      '\${element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 3)}'
+    );
+  });
+
+  test("cross account imported event bus has right resource env", () => {
+    const arnParts = {
+      resource: "bus",
+      service: "events",
+      account: "myAccount",
+      region: "us-west-1",
+    };
+
+    const arn = Arn.format(arnParts, stack);
+
+    const importEB = EventBus.fromEventBusArn(stack, "ImportBus", arn);
+
+    // WHEN
+    expect(importEB.env.account).toEqual(arnParts.account);
+    expect(importEB.env.region).toEqual(arnParts.region);
+  });
+
+  test("can get bus name", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusName: bus.eventBusName,
+      },
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusName: "\${aws_cloudwatch_event_bus.Bus_EA82B648.name}",
+    });
+  });
+
+  test("can get bus arn", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusArn: bus.eventBusArn,
+      },
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusArn: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+    });
+  });
+
+  test("event bus name cannot be default", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "default",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must not be 'default'/);
+  });
+
+  test("event bus name cannot contain slash", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "my/bus",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must not contain '\\/'/);
+  });
+
+  test("event bus cannot have name and source name", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "myBus",
+        eventSourceName: "myBus",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' and 'eventSourceName' cannot both be provided/);
+  });
+
+  test("event bus name cannot be empty string", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must satisfy: /);
+  });
+
+  test("does not throw if eventBusName is a token", () => {
+    // GIVEN
+
+    // WHEN / THEN
+    expect(
+      () =>
+        new EventBus(stack, "EventBus", {
+          eventBusName: Lazy.stringValue({
+            produce: () => "Example",
+          }),
+        })
+    ).not.toThrow();
+  });
+
+  test("event bus source name must follow pattern", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventSourceName: "invalid-partner",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventSourceName' must satisfy: \\/\\^aws/);
+  });
+
+  test("does not throw if eventSourceName is a token", () => {
+    // GIVEN
+
+    // WHEN / THEN
+    expect(
+      () =>
+        new EventBus(stack, "EventBus", {
+          eventSourceName: Lazy.stringValue({
+            produce: () => "Example",
+          }),
+        })
+    ).not.toThrow();
+  });
+
+  test("event bus source name cannot be empty string", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventSourceName: "",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventSourceName' must satisfy: /);
+  });
+
+  // TODO: Event Bus Description is not supported by terraform-provider-aws
+  // test("event bus description cannot be too long", () => {
+  //   // GIVEN
+  //   const tooLongDescription = "a".repeat(513);
+
+  //   // WHEN / THEN
+  //   expect(() => {
+  //     new EventBus(stack, "EventBusWithTooLongDescription", {
+  //       description: tooLongDescription,
+  //     });
+  //   }).toThrow(
+  //     "description must be less than or equal to 512 characters, got 513",
+  //   );
+  // });
+
+  // DEPRECATED
+  test("can grant PutEvents", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // WHEN
+    EventBus.grantPutEvents(role);
+
+    // THEN
+    Template.synth(stack).toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+
+  test("can grant PutEvents using grantAllPutEvents", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // WHEN
+    EventBus.grantAllPutEvents(role);
+
+    // THEN
+    Template.synth(stack).toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+
+  test("can grant PutEvents to a specific event bus", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    const eventBus = new EventBus(stack, "EventBus");
+
+    // WHEN
+    eventBus.grantPutEventsTo(role);
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: [stack.resolve(eventBus.eventBusArn)],
+          },
+        ],
+      }
+    );
+    t.expect.toHaveResourceWithProperties(iamRolePolicy.IamRolePolicy, {
+      name: "TestStackRoleDefaultPolicyC86B8D55",
+      policy:
+        "\${data.aws_iam_policy_document.Role_DefaultPolicy_2E5E5E0B.json}",
+      role: stack.resolve(role.roleName),
+    });
+  });
+
+  test("can archive events", () => {
+    // GIVEN
+
+    // WHEN
+    const event = new EventBus(stack, "Bus");
+
+    event.archive("MyArchive", {
+      eventPattern: {
+        account: [stack.account],
+      },
+      archiveName: "MyArchive",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventArchive.CloudwatchEventArchive,
+      {
+        description:
+          "Event Archive for \${aws_cloudwatch_event_bus.Bus_EA82B648.name} Event Bus",
+        event_pattern: {
+          account: ["\${data.aws_caller_identity.CallerIdentity.account_id}"],
+        },
+        event_source_arn: stack.resolve(event.eventBusArn), // "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+        name: "MyArchive",
+        retention_days: 0,
+      }
+    );
+  });
+
+  test("can archive events from an imported EventBus", () => {
+    // GIVEN
+
+    // WHEN
+    const bus = new EventBus(stack, "Bus");
+
+    const importedBus = EventBus.fromEventBusArn(
+      stack,
+      "ImportedBus",
+      bus.eventBusArn
+    );
+
+    importedBus.archive("MyArchive", {
+      eventPattern: {
+        account: [stack.account],
+      },
+      archiveName: "MyArchive",
+    });
+
+    // THEN
+    const t = new Template(stack);
+
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventArchive.CloudwatchEventArchive,
+      {
+        description:
+          'Event Archive for \${element(split("/", element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 5)), 1)} Event Bus',
+        event_pattern: {
+          account: ["\${data.aws_caller_identity.CallerIdentity.account_id}"],
+        },
+        event_source_arn: stack.resolve(bus.eventBusArn),
+        name: "MyArchive",
+        retention_days: 0,
+      }
+    );
+  });
+
+  test("cross account event bus uses generated physical name", () => {
+    // GIVEN
+    // env: {
+    //   account: "11111111111",
+    //   region: "us-east-1",
+    // },
+    const stack1 = new AwsStack(Testing.app(), "Stack1", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+    // env: {
+    //   account: "22222222222",
+    //   region: "us-east-1",
+    // },
+    const stack2 = new AwsStack(Testing.app(), "Stack2", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+
+    // WHEN
+    const bus1 = new EventBus(stack1, "Bus", {
+      eventBusName: Lazy.stringValue({
+        produce: () => "stack1bus",
+      }), // PhysicalName.GENERATE_IF_NEEDED,
+    });
+
+    new TerraformOutput(stack2, "BusName", { value: bus1.eventBusName });
+
+    // THEN
+    Template.synth(stack1).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "stack1bus",
+        // Name: "stack1stack1busca19bdf8ab2e51b62a5a",
+      }
+    );
+  });
+
+  test("can add one event bus policy", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    // WHEN
+    bus.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AccountPrincipal("111111111111111")],
+        actions: ["events:PutEvents"],
+        sid: "123",
+        resources: [bus.eventBusArn],
+      })
+    );
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBusPolicy.CloudwatchEventBusPolicy,
+      {
+        event_bus_name: "\${aws_cloudwatch_event_bus.Bus_EA82B648.name}",
+        policy:
+          "\${data.aws_iam_policy_document.Bus_Policy_Document_ABBD772C.json}",
+      }
+    );
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            sid: "123",
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "arn:\${data.aws_partition.Partitition.partition}:iam::111111111111111:root",
+                ],
+                type: "AWS",
+              },
+            ],
+            resources: [stack.resolve(bus.eventBusArn)],
+          },
+        ],
+      }
+    );
+  });
+
+  // TODO: TerraConstructs aggregates all statements in a single policy document...
+  test.skip("can add more than one event bus policy", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    const statement1 = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ArnPrincipal("arn")],
+      actions: ["events:PutEvents"],
+      sid: "statement1",
+      resources: [bus.eventBusArn],
+    });
+
+    const statement2 = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ArnPrincipal("arn")],
+      actions: ["events:DeleteRule"],
+      sid: "statement2",
+      resources: [bus.eventBusArn],
+    });
+
+    // WHEN
+    const add1 = bus.addToResourcePolicy(statement1);
+    const add2 = bus.addToResourcePolicy(statement2);
+
+    // THEN
+    expect(add1.statementAdded).toBe(true);
+    expect(add2.statementAdded).toBe(true);
+    const t = new Template(stack);
+    t.resourceCountIs(cloudwatchEventBusPolicy.CloudwatchEventBusPolicy, 2);
+  });
+
+  // TODO: TerraConstructs does not error when sid is not provided
+  test.skip("Event Bus policy statements must have a sid", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    // THEN
+    expect(() =>
+      bus.addToResourcePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          principals: [new iam.ArnPrincipal("arn")],
+          actions: ["events:PutEvents"],
+        })
+      )
+    ).toThrow("Event Bus policy statements must have a sid");
+  });
+
+  // TODO: Event Bus DQL is not supported by terraform-provider-aws
+  // test("set dead letter queue", () => {
+  //   const dlq = new sqs.Queue(stack, "DLQ");
+  //   new EventBus(stack, "Bus", {
+  //     deadLetterQueue: dlq,
+  //   });
+
+  //   Template.synth(stack).toHaveResourceWithProperties(
+  //     cloudwatchEventBus.CloudwatchEventBus,
+  //     {
+  //       DeadLetterConfig: {
+  //         Arn: {
+  //           "Fn::GetAtt": ["DLQ581697C4", "Arn"],
+  //         },
+  //       },
+  //     },
+  //   );
+  // });
+
+  test("Event Bus with a customer managed key", () => {
+    // GIVEN
+    const key = new kms.Key(stack, "Key");
+
+    // WHEN
+    const eventBus = new EventBus(stack, "Bus", {
+      kmsKey: key,
+    });
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        kms_key_identifier: stack.resolve(key.keyArn),
+      }
+    );
+
+    t.expect.toHaveResourceWithProperties(kmsKey.KmsKey, {
+      policy: "\${data.aws_iam_policy_document.Key_Policy_48E51E45.json}",
+    });
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["kms:*"],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "arn:\${data.aws_partition.Partitition.partition}:iam::\${data.aws_caller_identity.CallerIdentity.account_id}:root",
+                ],
+                type: "AWS",
+              },
+            ],
+            resources: ["*"],
+          },
+          {
+            actions: ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
+            condition: [
+              {
+                test: "StringEquals",
+                values: [
+                  "\${data.aws_caller_identity.CallerIdentity.account_id}",
+                ],
+                variable: "aws:SourceAccount",
+              },
+              {
+                test: "StringEquals",
+                values: [
+                  "arn:\${data.aws_partition.Partitition.partition}:events:us-east-1:\${data.aws_caller_identity.CallerIdentity.account_id}:event-bus/TestStackBus54CCAD7F",
+                ],
+                variable: "aws:SourceArn",
+              },
+              {
+                test: "StringEquals",
+                values: [
+                  "arn:\${data.aws_partition.Partitition.partition}:events:us-east-1:\${data.aws_caller_identity.CallerIdentity.account_id}:event-bus/TestStackBus54CCAD7F",
+                ],
+                variable: "kms:EncryptionContext:aws:events:event-bus:arn",
+              },
+            ],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "\${data.aws_service_principal.aws_svcp_default_region_events.name}",
+                ],
+                type: "Service",
+              },
+            ],
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+});
+
+export enum TestProviderMetadata {
+  TYPE = "test",
+}
+export interface TestResourceConfig extends TerraformMetaArguments {
+  readonly properties?: { [name: string]: any };
+}
+export class TestResource extends TerraformResource {
+  public static readonly tfResourceType: string = "test_resource";
+
+  /**
+   * AWS CloudFormation resource properties.
+   *
+   * This object is returned via cfnProperties
+   * @internal
+   */
+  protected readonly _properties: any;
+  constructor(scope: Construct, id: string, config: TestResourceConfig) {
+    super(scope, id, {
+      terraformResourceType: "test_resource",
+      terraformGeneratorMetadata: {
+        providerName: TestProviderMetadata.TYPE,
+        providerVersionConstraint: "~> 2.0",
+      },
+      provider: config.provider,
+      dependsOn: config.dependsOn,
+      count: config.count,
+      lifecycle: config.lifecycle,
+      provisioners: config.provisioners,
+      forEach: config.forEach,
+    });
+    this._properties = config.properties || {};
+  }
+
+  public get names(): string[] {
+    return this.getListAttribute("names");
+  }
+
+  protected synthesizeAttributes(): { [name: string]: any } {
+    return this._properties;
+  }
+}
+
+\`\`\`
+
+## Reference Documents
+**AWS CDK Tested Construct Type Declarations:**
+Refer to the following Reference declarations used by the AWSCDK constructs:
+\`\`\`typescript
+// event-bus.d.ts
+import { Construct } from 'constructs';
+import { Archive, BaseArchiveProps } from './archive';
+import * as iam from '../../aws-iam';
+import * as kms from '../../aws-kms';
+import * as sqs from '../../aws-sqs';
+import { IResource, Resource } from '../../core';
+/**
+ * Interface which all EventBus based classes MUST implement
+ */
+export interface IEventBus extends IResource {
+    /**
+     * The physical ID of this event bus resource
+     *
+     * @attribute
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-name
+     */
+    readonly eventBusName: string;
+    /**
+     * The ARN of this event bus resource
+     *
+     * @attribute
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Arn-fn::getatt
+     */
+    readonly eventBusArn: string;
+    /**
+     * The JSON policy of this event bus resource
+     *
+     * @attribute
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Policy-fn::getatt
+     */
+    readonly eventBusPolicy: string;
+    /**
+     * The partner event source to associate with this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-eventsourcename
+     */
+    readonly eventSourceName?: string;
+    /**
+     * Create an EventBridge archive to send events to.
+     * When you create an archive, incoming events might not immediately start being sent to the archive.
+     * Allow a short period of time for changes to take effect.
+     *
+     * @param props Properties of the archive
+     */
+    archive(id: string, props: BaseArchiveProps): Archive;
+    /**
+     * Grants an IAM Principal to send custom events to the eventBus
+     * so that they can be matched to rules.
+     *
+     * @param grantee The principal (no-op if undefined)
+     */
+    grantPutEventsTo(grantee: iam.IGrantable): iam.Grant;
+}
+/**
+ * Properties to define an event bus
+ */
+export interface EventBusProps {
+    /**
+     * The name of the event bus you are creating
+     * Note: If 'eventSourceName' is passed in, you cannot set this
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-name
+     * @default - automatically generated name
+     */
+    readonly eventBusName?: string;
+    /**
+     * The partner event source to associate with this event bus resource
+     * Note: If 'eventBusName' is passed in, you cannot set this
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-eventsourcename
+     * @default - no partner event source
+     */
+    readonly eventSourceName?: string;
+    /**
+     * Dead-letter queue for the event bus
+     *
+     * @see https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-rule-event-delivery.html#eb-rule-dlq
+     *
+     * @default - no dead-letter queue
+     */
+    readonly deadLetterQueue?: sqs.IQueue;
+    /**
+     * The event bus description.
+     *
+     * The description can be up to 512 characters long.
+     *
+     * @see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-description
+     *
+     * @default - no description
+     */
+    readonly description?: string;
+    /**
+     * The customer managed key that encrypt events on this event bus.
+     *
+     * @default - Use an AWS managed key
+     */
+    readonly kmsKey?: kms.IKey;
+}
+/**
+ * Interface with properties necessary to import a reusable EventBus
+ */
+export interface EventBusAttributes {
+    /**
+     * The physical ID of this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-name
+     */
+    readonly eventBusName: string;
+    /**
+     * The ARN of this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Arn-fn::getatt
+     */
+    readonly eventBusArn: string;
+    /**
+     * The JSON policy of this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#Policy-fn::getatt
+     */
+    readonly eventBusPolicy: string;
+    /**
+     * The partner event source to associate with this event bus resource
+     *
+     * @link https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-events-eventbus.html#cfn-events-eventbus-eventsourcename
+     * @default - no partner event source
+     */
+    readonly eventSourceName?: string;
+}
+declare abstract class EventBusBase extends Resource implements IEventBus {
+    /**
+     * The physical ID of this event bus resource
+     */
+    abstract readonly eventBusName: string;
+    /**
+     * The ARN of the event bus, such as:
+     * arn:aws:events:us-east-2:123456789012:event-bus/aws.partner/PartnerName/acct1/repo1.
+     */
+    abstract readonly eventBusArn: string;
+    /**
+     * The policy for the event bus in JSON form.
+     */
+    abstract readonly eventBusPolicy: string;
+    /**
+     * The name of the partner event source
+     */
+    abstract readonly eventSourceName?: string;
+    archive(id: string, props: BaseArchiveProps): Archive;
+    grantPutEventsTo(grantee: iam.IGrantable): iam.Grant;
+}
+/**
+ * Define an EventBridge EventBus
+ *
+ * @resource AWS::Events::EventBus
+ */
+export declare class EventBus extends EventBusBase {
+    /**
+     * Import an existing event bus resource
+     * @param scope Parent construct
+     * @param id Construct ID
+     * @param eventBusArn ARN of imported event bus
+     */
+    static fromEventBusArn(scope: Construct, id: string, eventBusArn: string): IEventBus;
+    /**
+     * Import an existing event bus resource
+     * @param scope Parent construct
+     * @param id Construct ID
+     * @param eventBusName Name of imported event bus
+     */
+    static fromEventBusName(scope: Construct, id: string, eventBusName: string): IEventBus;
+    /**
+     * Import an existing event bus resource
+     * @param scope Parent construct
+     * @param id Construct ID
+     * @param attrs Imported event bus properties
+     */
+    static fromEventBusAttributes(scope: Construct, id: string, attrs: EventBusAttributes): IEventBus;
+    /**
+     * Permits an IAM Principal to send custom events to EventBridge
+     * so that they can be matched to rules.
+     *
+     * @param grantee The principal (no-op if undefined)
+     */
+    static grantAllPutEvents(grantee: iam.IGrantable): iam.Grant;
+    private static eventBusProps;
+    /**
+     * The physical ID of this event bus resource
+     */
+    readonly eventBusName: string;
+    /**
+     * The ARN of the event bus, such as:
+     * arn:aws:events:us-east-2:123456789012:event-bus/aws.partner/PartnerName/acct1/repo1.
+     */
+    readonly eventBusArn: string;
+    /**
+     * The policy for the event bus in JSON form.
+     */
+    readonly eventBusPolicy: string;
+    /**
+     * The name of the partner event source
+     */
+    readonly eventSourceName?: string;
+    constructor(scope: Construct, id: string, props?: EventBusProps);
+    /**
+     * Adds a statement to the IAM resource policy associated with this event bus.
+     */
+    addToResourcePolicy(statement: iam.PolicyStatement): iam.AddToResourcePolicyResult;
+}
+/**
+ * Properties to associate Event Buses with a policy
+ */
+export interface EventBusPolicyProps {
+    /**
+     * The event bus to which the policy applies
+     */
+    readonly eventBus: IEventBus;
+    /**
+     * An IAM Policy Statement to apply to the Event Bus
+     */
+    readonly statement: iam.PolicyStatement;
+    /**
+     * An identifier string for the external account that
+     * you are granting permissions to.
+     */
+    readonly statementId: string;
+}
+/**
+ * The policy for an Event Bus
+ *
+ * Policies define the operations that are allowed on this resource.
+ *
+ * You almost never need to define this construct directly.
+ *
+ * All AWS resources that support resource policies have a method called
+ * \`addToResourcePolicy()\`, which will automatically create a new resource
+ * policy if one doesn't exist yet, otherwise it will add to the existing
+ * policy.
+ *
+ * Prefer to use \`addToResourcePolicy()\` instead.
+ */
+export declare class EventBusPolicy extends Resource {
+    constructor(scope: Construct, id: string, props: EventBusPolicyProps);
+}
+export {};
+
+\`\`\`
+
+**Target documentations:**
+Ensure generated configurations are tested to follow the following documentation
+
+------------------------
+// cloudwatch_event_bus.html.markdown
+---
+subcategory: "EventBridge"
+layout: "aws"
+page_title: "AWS: aws_cloudwatch_event_bus"
+description: |-
+  Provides an EventBridge event bus resource.
+---
+
+### Resource: aws_cloudwatch_event_bus
+
+Provides an EventBridge event bus resource.
+
+~> **Note:** EventBridge was formerly known as CloudWatch Events. The functionality is identical.
+
+#### Example Usage
+
+\`\`\`terraform
+resource "aws_cloudwatch_event_bus" "messenger" {
+  name = "chat-messages"
+}
+\`\`\`
+
+\`\`\`terraform
+data "aws_cloudwatch_event_source" "examplepartner" {
+  name_prefix = "aws.partner/examplepartner.com"
+}
+
+resource "aws_cloudwatch_event_bus" "examplepartner" {
+  name              = data.aws_cloudwatch_event_source.examplepartner.name
+  description       = "Event bus for example partner events"
+  event_source_name = data.aws_cloudwatch_event_source.examplepartner.name
+}
+\`\`\`
+
+#### Argument Reference
+
+This resource supports the following arguments:
+
+The following arguments are required:
+
+* \`name\` - (Required) Name of the new event bus. The names of custom event buses can't contain the / character. To create a partner event bus, ensure that the \`name\` matches the \`event_source_name\`.
+
+The following arguments are optional:
+
+* \`description\` - (Optional) Event bus description.
+* \`event_source_name\` - (Optional) Partner event source that the new event bus will be matched with. Must match \`name\`.
+* \`kms_key_identifier\` - (Optional) Identifier of the AWS KMS customer managed key for EventBridge to use, if you choose to use a customer managed key to encrypt events on this event bus. The identifier can be the key Amazon Resource Name (ARN), KeyId, key alias, or key alias ARN.
+* \`tags\` - (Optional) Map of tags assigned to the resource. If configured with a provider [\`default_tags\` configuration block](/docs/providers/aws/index.html#default_tags-configuration-block) present, tags with matching keys will overwrite those defined at the provider-level.
+
+#### Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* \`arn\` - ARN of the event bus.
+* \`id\` - Name of the event bus.
+* \`tags_all\` - Map of tags assigned to the resource, including those inherited from the provider [\`default_tags\` configuration block](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#default_tags-configuration-block).
+
+#### Import
+
+In Terraform v1.5.0 and later, use an [\`import\` block](https://developer.hashicorp.com/terraform/language/import) to import EventBridge event buses using the \`name\` (which can also be a partner event source name). For example:
+
+\`\`\`terraform
+import {
+  to = aws_cloudwatch_event_bus.messenger
+  id = "chat-messages"
+}
+\`\`\`
+
+Using \`terraform import\`, import EventBridge event buses using the name of the event bus (which can also be a partner event source name). For example:
+
+\`\`\`console
+% terraform import aws_cloudwatch_event_bus.messenger chat-messages
+\`\`\`
+
+
+// cloudwatch_event_bus_policy.html.markdown
+---
+subcategory: "EventBridge"
+layout: "aws"
+page_title: "AWS: aws_cloudwatch_event_bus_policy"
+description: |-
+  Provides a resource to create an EventBridge policy to support cross-account events.
+---
+
+### Resource: aws_cloudwatch_event_bus_policy
+
+Provides a resource to create an EventBridge resource policy to support cross-account events.
+
+~> **Note:** EventBridge was formerly known as CloudWatch Events. The functionality is identical.
+
+~> **Note:** The EventBridge bus policy resource  (\`aws_cloudwatch_event_bus_policy\`) is incompatible with the EventBridge permission resource (\`aws_cloudwatch_event_permission\`) and will overwrite permissions.
+
+#### Example Usage
+
+##### Account Access
+
+\`\`\`hcl
+data "aws_iam_policy_document" "test" {
+  statement {
+    sid    = "DevAccountAccess"
+    effect = "Allow"
+    actions = [
+      "events:PutEvents",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["123456789012"]
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_bus_policy" "test" {
+  policy         = data.aws_iam_policy_document.test.json
+  event_bus_name = aws_cloudwatch_event_bus.test.name
+}
+\`\`\`
+
+##### Organization Access
+
+\`\`\`hcl
+data "aws_iam_policy_document" "test" {
+  statement {
+    sid    = "OrganizationAccess"
+    effect = "Allow"
+    actions = [
+      "events:DescribeRule",
+      "events:ListRules",
+      "events:ListTargetsByRule",
+      "events:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:rule/*",
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [aws_organizations_organization.example.id]
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_bus_policy" "test" {
+  policy         = data.aws_iam_policy_document.test.json
+  event_bus_name = aws_cloudwatch_event_bus.test.name
+}
+\`\`\`
+
+##### Multiple Statements
+
+\`\`\`hcl
+data "aws_iam_policy_document" "test" {
+
+  statement {
+    sid    = "DevAccountAccess"
+    effect = "Allow"
+    actions = [
+      "events:PutEvents",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["123456789012"]
+    }
+  }
+
+  statement {
+    sid    = "OrganizationAccess"
+    effect = "Allow"
+    actions = [
+      "events:DescribeRule",
+      "events:ListRules",
+      "events:ListTargetsByRule",
+      "events:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:events:eu-west-1:123456789012:rule/*",
+      "arn:aws:events:eu-west-1:123456789012:event-bus/default"
+    ]
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:PrincipalOrgID"
+      values   = [aws_organizations_organization.example.id]
+    }
+  }
+}
+
+resource "aws_cloudwatch_event_bus_policy" "test" {
+  policy         = data.aws_iam_policy_document.test.json
+  event_bus_name = aws_cloudwatch_event_bus.test.name
+}
+\`\`\`
+
+#### Argument Reference
+
+This resource supports the following arguments:
+
+* \`policy\` - (Required) The text of the policy. For more information about building AWS IAM policy documents with Terraform, see the [AWS IAM Policy Document Guide](https://learn.hashicorp.com/terraform/aws/iam-policy).
+* \`event_bus_name\` - (Optional) The name of the event bus to set the permissions on.
+  If you omit this, the permissions are set on the \`default\` event bus.
+
+#### Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* \`id\` - The name of the EventBridge event bus.
+
+#### Import
+
+In Terraform v1.5.0 and later, use an [\`import\` block](https://developer.hashicorp.com/terraform/language/import) to import an EventBridge policy using the \`event_bus_name\`. For example:
+
+\`\`\`terraform
+import {
+  to = aws_cloudwatch_event_bus_policy.DevAccountAccess
+  id = "example-event-bus"
+}
+\`\`\`
+
+Using \`terraform import\`, import an EventBridge policy using the \`event_bus_name\`. For example:
+
+\`\`\`console
+% terraform import aws_cloudwatch_event_bus_policy.DevAccountAccess example-event-bus
+\`\`\`
+
+
+// cloudwatch_event_permission.html.markdown
+---
+subcategory: "EventBridge"
+layout: "aws"
+page_title: "AWS: aws_cloudwatch_event_permission"
+description: |-
+  Provides a resource to create an EventBridge permission to support cross-account events in the current account default event bus.
+---
+
+### Resource: aws_cloudwatch_event_permission
+
+Provides a resource to create an EventBridge permission to support cross-account events in the current account default event bus.
+
+~> **Note:** EventBridge was formerly known as CloudWatch Events. The functionality is identical.
+
+~> **Note:** The EventBridge bus policy resource  (\`aws_cloudwatch_event_bus_policy\`) is incompatible with the EventBridge permission resource (\`aws_cloudwatch_event_permission\`) and will overwrite permissions.
+
+#### Example Usage
+
+##### Account Access
+
+\`\`\`terraform
+resource "aws_cloudwatch_event_permission" "DevAccountAccess" {
+  principal    = "123456789012"
+  statement_id = "DevAccountAccess"
+}
+\`\`\`
+
+##### Organization Access
+
+\`\`\`terraform
+resource "aws_cloudwatch_event_permission" "OrganizationAccess" {
+  principal    = "*"
+  statement_id = "OrganizationAccess"
+
+  condition {
+    key   = "aws:PrincipalOrgID"
+    type  = "StringEquals"
+    value = aws_organizations_organization.example.id
+  }
+}
+\`\`\`
+
+#### Argument Reference
+
+This resource supports the following arguments:
+
+* \`principal\` - (Required) The 12-digit AWS account ID that you are permitting to put events to your default event bus. Specify \`*\` to permit any account to put events to your default event bus, optionally limited by \`condition\`.
+* \`statement_id\` - (Required) An identifier string for the external account that you are granting permissions to.
+* \`action\` - (Optional) The action that you are enabling the other account to perform. Defaults to \`events:PutEvents\`.
+* \`condition\` - (Optional) Configuration block to limit the event bus permissions you are granting to only accounts that fulfill the condition. Specified below.
+* \`event_bus_name\` - (Optional) The name of the event bus to set the permissions on.
+  If you omit this, the permissions are set on the \`default\` event bus.
+
+##### condition
+
+* \`key\` - (Required) Key for the condition. Valid values: \`aws:PrincipalOrgID\`.
+* \`type\` - (Required) Type of condition. Value values: \`StringEquals\`.
+* \`value\` - (Required) Value for the key.
+
+#### Attribute Reference
+
+This resource exports the following attributes in addition to the arguments above:
+
+* \`id\` - The statement ID of the EventBridge permission.
+
+#### Import
+
+In Terraform v1.5.0 and later, use an [\`import\` block](https://developer.hashicorp.com/terraform/language/import) to import EventBridge permissions using the \`event_bus_name/statement_id\` (if you omit \`event_bus_name\`, the \`default\` event bus will be used). For example:
+
+\`\`\`terraform
+import {
+  to = aws_cloudwatch_event_permission.DevAccountAccess
+  id = "example-event-bus/DevAccountAccess"
+}
+\`\`\`
+
+Using \`terraform import\`, import EventBridge permissions using the \`event_bus_name/statement_id\` (if you omit \`event_bus_name\`, the \`default\` event bus will be used). For example:
+
+\`\`\`console
+% terraform import aws_cloudwatch_event_permission.DevAccountAccess example-event-bus/DevAccountAccess
+\`\`\`
+
+------------------------
+
+Format:
+{
+    "code": "converted code"
+}"
+`;
+
+exports[`generateSampleResponse > sample model response snapshot 1`] = `
+"{
+  "code": "import {
+  cloudwatchEventBus,
+  cloudwatchEventArchive,
+  cloudwatchEventBusPolicy,
+  dataAwsIamPolicyDocument,
+  kmsKey,
+  iamRolePolicy,
+} from "@cdktf/provider-aws";
+import {
+  Lazy,
+  TerraformMetaArguments,
+  TerraformOutput,
+  TerraformResource,
+  Testing,
+} from "cdktf";
+import "cdktf/lib/testing/adapters/jest";
+import { Construct } from "constructs";
+import { AwsStack, Arn } from "../../../src/aws";
+import * as kms from "../../../src/aws/encryption";
+import * as iam from "../../../src/aws/iam";
+import { EventBus } from "../../../src/aws/notify/event-bus";
+import { Template } from "../../assertions";
+
+const environmentName = "Test";
+const gridUUID = "123e4567-e89b-12d3";
+const providerConfig = { region: "us-east-1" };
+const gridBackendConfig = {
+  address: "http://localhost:3000",
+};
+
+describe("event bus", () => {
+  let stack: AwsStack;
+
+  beforeEach(() => {
+    const app = Testing.app();
+    stack = new AwsStack(app, "TestStack", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+  });
+
+  test("default event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus");
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+  });
+
+  test("default event bus with empty props object", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {});
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+  });
+
+  test("named event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "myEventBus",
+      }
+    );
+  });
+
+  // // TODO: Event Bus Description is not supported by terraform-provider-aws
+  // test("event bus with description", () => {
+  //   // GIVEN
+
+  //   // WHEN
+  //   new EventBus(stack, "myEventBus", {
+  //     description: "myEventBusDescription",
+  //   });
+
+  //   // THEN
+  //   Template.synth(stack).toHaveResourceWithProperties(
+  //     cloudwatchEventBus.CloudwatchEventBus,
+  //     {
+  //       description: "myEventBusDescription",
+  //     },
+  //   );
+  // });
+
+  test("partner event bus", () => {
+    // GIVEN
+
+    // WHEN
+    new EventBus(stack, "Bus", {
+      eventSourceName: "aws.partner/PartnerName/acct1/repo1",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "aws.partner/PartnerName/acct1/repo1",
+        event_source_name: "aws.partner/PartnerName/acct1/repo1",
+      }
+    );
+  });
+
+  test("imported event bus", () => {
+    const eventBus = new EventBus(stack, "Bus");
+
+    const importEB = EventBus.fromEventBusArn(
+      stack,
+      "ImportBus",
+      eventBus.eventBusArn
+    );
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusArn1: eventBus.eventBusArn,
+        EventBusArn2: importEB.eventBusArn,
+      },
+    });
+
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusArn1: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+      EventBusArn2: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+    });
+  });
+
+  test("imported event bus from name", () => {
+    const eventBus = new EventBus(stack, "Bus", {
+      eventBusName: "test-bus-to-import-by-name",
+    });
+
+    const importEB = EventBus.fromEventBusName(
+      stack,
+      "ImportBus",
+      eventBus.eventBusName
+    );
+
+    // WHEN
+    expect(stack.resolve(eventBus.eventBusName)).toEqual(
+      stack.resolve(importEB.eventBusName)
+    );
+  });
+
+  test("same account imported event bus has right resource env", () => {
+    const eventBus = new EventBus(stack, "Bus");
+
+    const importEB = EventBus.fromEventBusArn(
+      stack,
+      "ImportBus",
+      eventBus.eventBusArn
+    );
+
+    // WHEN
+    expect(stack.resolve(importEB.env.account)).toEqual(
+      '\${element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 4)}'
+    );
+    expect(stack.resolve(importEB.env.region)).toEqual(
+      '\${element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 3)}'
+    );
+  });
+
+  test("cross account imported event bus has right resource env", () => {
+    const arnParts = {
+      resource: "bus",
+      service: "events",
+      account: "myAccount",
+      region: "us-west-1",
+    };
+
+    const arn = Arn.format(arnParts, stack);
+
+    const importEB = EventBus.fromEventBusArn(stack, "ImportBus", arn);
+
+    // WHEN
+    expect(importEB.env.account).toEqual(arnParts.account);
+    expect(importEB.env.region).toEqual(arnParts.region);
+  });
+
+  test("can get bus name", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusName: bus.eventBusName,
+      },
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusName: "\${aws_cloudwatch_event_bus.Bus_EA82B648.name}",
+    });
+  });
+
+  test("can get bus arn", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus", {
+      eventBusName: "myEventBus",
+    });
+
+    // WHEN
+    new TestResource(stack, "Res", {
+      properties: {
+        EventBusArn: bus.eventBusArn,
+      },
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(TestResource, {
+      EventBusArn: "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+    });
+  });
+
+  test("event bus name cannot be default", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "default",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must not be 'default'/);
+  });
+
+  test("event bus name cannot contain slash", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "my/bus",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must not contain '\\/'/);
+  });
+
+  test("event bus cannot have name and source name", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "myBus",
+        eventSourceName: "myBus",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' and 'eventSourceName' cannot both be provided/);
+  });
+
+  test("event bus name cannot be empty string", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventBusName: "",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventBusName' must satisfy: /);
+  });
+
+  test("does not throw if eventBusName is a token", () => {
+    // GIVEN
+
+    // WHEN / THEN
+    expect(
+      () =>
+        new EventBus(stack, "EventBus", {
+          eventBusName: Lazy.stringValue({
+            produce: () => "Example",
+          }),
+        })
+    ).not.toThrow();
+  });
+
+  test("event bus source name must follow pattern", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventSourceName: "invalid-partner",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventSourceName' must satisfy: \\/\\^aws/);
+  });
+
+  test("does not throw if eventSourceName is a token", () => {
+    // GIVEN
+
+    // WHEN / THEN
+    expect(
+      () =>
+        new EventBus(stack, "EventBus", {
+          eventSourceName: Lazy.stringValue({
+            produce: () => "Example",
+          }),
+        })
+    ).not.toThrow();
+  });
+
+  test("event bus source name cannot be empty string", () => {
+    // GIVEN
+
+    // WHEN
+    const createInvalidBus = () =>
+      new EventBus(stack, "Bus", {
+        eventSourceName: "",
+      });
+
+    // THEN
+    expect(() => {
+      createInvalidBus();
+    }).toThrow(/'eventSourceName' must satisfy: /);
+  });
+
+  // TODO: Event Bus Description is not supported by terraform-provider-aws
+  // test("event bus description cannot be too long", () => {
+  //   // GIVEN
+  //   const tooLongDescription = "a".repeat(513);
+
+  //   // WHEN / THEN
+  //   expect(() => {
+  //     new EventBus(stack, "EventBusWithTooLongDescription", {
+  //       description: tooLongDescription,
+  //     });
+  //   }).toThrow(
+  //     "description must be less than or equal to 512 characters, got 513",
+  //   );
+  // });
+
+  // DEPRECATED
+  test("can grant PutEvents", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // WHEN
+    EventBus.grantPutEvents(role);
+
+    // THEN
+    Template.synth(stack).toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+
+  test("can grant PutEvents using grantAllPutEvents", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // WHEN
+    EventBus.grantAllPutEvents(role);
+
+    // THEN
+    Template.synth(stack).toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+
+  test("can grant PutEvents to a specific event bus", () => {
+    // GIVEN
+    const role = new iam.Role(stack, "Role", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    const eventBus = new EventBus(stack, "EventBus");
+
+    // WHEN
+    eventBus.grantPutEventsTo(role);
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            resources: [stack.resolve(eventBus.eventBusArn)],
+          },
+        ],
+      }
+    );
+    t.expect.toHaveResourceWithProperties(iamRolePolicy.IamRolePolicy, {
+      name: "TestStackRoleDefaultPolicyC86B8D55",
+      policy:
+        "\${data.aws_iam_policy_document.Role_DefaultPolicy_2E5E5E0B.json}",
+      role: stack.resolve(role.roleName),
+    });
+  });
+
+  test("can archive events", () => {
+    // GIVEN
+
+    // WHEN
+    const event = new EventBus(stack, "Bus");
+
+    event.archive("MyArchive", {
+      eventPattern: {
+        account: [stack.account],
+      },
+      archiveName: "MyArchive",
+    });
+
+    // THEN
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+
+    Template.synth(stack).toHaveResourceWithProperties(
+      cloudwatchEventArchive.CloudwatchEventArchive,
+      {
+        description:
+          "Event Archive for \${aws_cloudwatch_event_bus.Bus_EA82B648.name} Event Bus",
+        event_pattern: {
+          account: ["\${data.aws_caller_identity.CallerIdentity.account_id}"],
+        },
+        event_source_arn: stack.resolve(event.eventBusArn), // "\${aws_cloudwatch_event_bus.Bus_EA82B648.arn}",
+        name: "MyArchive",
+        retention_days: 0,
+      }
+    );
+  });
+
+  test("can archive events from an imported EventBus", () => {
+    // GIVEN
+
+    // WHEN
+    const bus = new EventBus(stack, "Bus");
+
+    const importedBus = EventBus.fromEventBusArn(
+      stack,
+      "ImportedBus",
+      bus.eventBusArn
+    );
+
+    importedBus.archive("MyArchive", {
+      eventPattern: {
+        account: [stack.account],
+      },
+      archiveName: "MyArchive",
+    });
+
+    // THEN
+    const t = new Template(stack);
+
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        // name: "Bus", // TODO: BUG - This should be the name of the event bus
+        name: "TestStackBus54CCAD7F",
+      }
+    );
+
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventArchive.CloudwatchEventArchive,
+      {
+        description:
+          'Event Archive for \${element(split("/", element(split(":", aws_cloudwatch_event_bus.Bus_EA82B648.arn), 5)), 1)} Event Bus',
+        event_pattern: {
+          account: ["\${data.aws_caller_identity.CallerIdentity.account_id}"],
+        },
+        event_source_arn: stack.resolve(bus.eventBusArn),
+        name: "MyArchive",
+        retention_days: 0,
+      }
+    );
+  });
+
+  test("cross account event bus uses generated physical name", () => {
+    // GIVEN
+    // env: {
+    //   account: "11111111111",
+    //   region: "us-east-1",
+    // },
+    const stack1 = new AwsStack(Testing.app(), "Stack1", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+    // env: {
+    //   account: "22222222222",
+    //   region: "us-east-1",
+    // },
+    const stack2 = new AwsStack(Testing.app(), "Stack2", {
+      environmentName,
+      gridUUID,
+      providerConfig,
+      gridBackendConfig,
+    });
+
+    // WHEN
+    const bus1 = new EventBus(stack1, "Bus", {
+      eventBusName: Lazy.stringValue({
+        produce: () => "stack1bus",
+      }), // PhysicalName.GENERATE_IF_NEEDED,
+    });
+
+    new TerraformOutput(stack2, "BusName", { value: bus1.eventBusName });
+
+    // THEN
+    Template.synth(stack1).toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        name: "stack1bus",
+        // Name: "stack1stack1busca19bdf8ab2e51b62a5a",
+      }
+    );
+  });
+
+  test("can add one event bus policy", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    // WHEN
+    bus.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AccountPrincipal("111111111111111")],
+        actions: ["events:PutEvents"],
+        sid: "123",
+        resources: [bus.eventBusArn],
+      })
+    );
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBusPolicy.CloudwatchEventBusPolicy,
+      {
+        event_bus_name: "\${aws_cloudwatch_event_bus.Bus_EA82B648.name}",
+        policy:
+          "\${data.aws_iam_policy_document.Bus_Policy_Document_ABBD772C.json}",
+      }
+    );
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            sid: "123",
+            actions: ["events:PutEvents"],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "arn:\${data.aws_partition.Partitition.partition}:iam::111111111111111:root",
+                ],
+                type: "AWS",
+              },
+            ],
+            resources: [stack.resolve(bus.eventBusArn)],
+          },
+        ],
+      }
+    );
+  });
+
+  // TODO: TerraConstructs aggregates all statements in a single policy document...
+  test.skip("can add more than one event bus policy", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    const statement1 = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ArnPrincipal("arn")],
+      actions: ["events:PutEvents"],
+      sid: "statement1",
+      resources: [bus.eventBusArn],
+    });
+
+    const statement2 = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ArnPrincipal("arn")],
+      actions: ["events:DeleteRule"],
+      sid: "statement2",
+      resources: [bus.eventBusArn],
+    });
+
+    // WHEN
+    const add1 = bus.addToResourcePolicy(statement1);
+    const add2 = bus.addToResourcePolicy(statement2);
+
+    // THEN
+    expect(add1.statementAdded).toBe(true);
+    expect(add2.statementAdded).toBe(true);
+    const t = new Template(stack);
+    t.resourceCountIs(cloudwatchEventBusPolicy.CloudwatchEventBusPolicy, 2);
+  });
+
+  // TODO: TerraConstructs does not error when sid is not provided
+  test.skip("Event Bus policy statements must have a sid", () => {
+    // GIVEN
+    const bus = new EventBus(stack, "Bus");
+
+    // THEN
+    expect(() =>
+      bus.addToResourcePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          principals: [new iam.ArnPrincipal("arn")],
+          actions: ["events:PutEvents"],
+        })
+      )
+    ).toThrow("Event Bus policy statements must have a sid");
+  });
+
+  // TODO: Event Bus DQL is not supported by terraform-provider-aws
+  // test("set dead letter queue", () => {
+  //   const dlq = new sqs.Queue(stack, "DLQ");
+  //   new EventBus(stack, "Bus", {
+  //     deadLetterQueue: dlq,
+  //   });
+
+  //   Template.synth(stack).toHaveResourceWithProperties(
+  //     cloudwatchEventBus.CloudwatchEventBus,
+  //     {
+  //       DeadLetterConfig: {
+  //         Arn: {
+  //           "Fn::GetAtt": ["DLQ581697C4", "Arn"],
+  //         },
+  //       },
+  //     },
+  //   );
+  // });
+
+  test("Event Bus with a customer managed key", () => {
+    // GIVEN
+    const key = new kms.Key(stack, "Key");
+
+    // WHEN
+    const eventBus = new EventBus(stack, "Bus", {
+      kmsKey: key,
+    });
+
+    // THEN
+    const t = new Template(stack);
+    t.expect.toHaveResourceWithProperties(
+      cloudwatchEventBus.CloudwatchEventBus,
+      {
+        kms_key_identifier: stack.resolve(key.keyArn),
+      }
+    );
+
+    t.expect.toHaveResourceWithProperties(kmsKey.KmsKey, {
+      policy: "\${data.aws_iam_policy_document.Key_Policy_48E51E45.json}",
+    });
+    t.expect.toHaveDataSourceWithProperties(
+      dataAwsIamPolicyDocument.DataAwsIamPolicyDocument,
+      {
+        statement: [
+          {
+            actions: ["kms:*"],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "arn:\${data.aws_partition.Partitition.partition}:iam::\${data.aws_caller_identity.CallerIdentity.account_id}:root",
+                ],
+                type: "AWS",
+              },
+            ],
+            resources: ["*"],
+          },
+          {
+            actions: ["kms:Decrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
+            condition: [
+              {
+                test: "StringEquals",
+                values: [
+                  "\${data.aws_caller_identity.CallerIdentity.account_id}",
+                ],
+                variable: "aws:SourceAccount",
+              },
+              {
+                test: "StringEquals",
+                values: [
+                  "arn:\${data.aws_partition.Partitition.partition}:events:us-east-1:\${data.aws_caller_identity.CallerIdentity.account_id}:event-bus/TestStackBus54CCAD7F",
+                ],
+                variable: "aws:SourceArn",
+              },
+              {
+                test: "StringEquals",
+                values: [
+                  "arn:\${data.aws_partition.Partitition.partition}:events:us-east-1:\${data.aws_caller_identity.CallerIdentity.account_id}:event-bus/TestStackBus54CCAD7F",
+                ],
+                variable: "kms:EncryptionContext:aws:events:event-bus:arn",
+              },
+            ],
+            effect: "Allow",
+            principals: [
+              {
+                identifiers: [
+                  "\${data.aws_service_principal.aws_svcp_default_region_events.name}",
+                ],
+                type: "Service",
+              },
+            ],
+            resources: ["*"],
+          },
+        ],
+      }
+    );
+  });
+});
+
+export enum TestProviderMetadata {
+  TYPE = "test",
+}
+export interface TestResourceConfig extends TerraformMetaArguments {
+  readonly properties?: { [name: string]: any };
+}
+export class TestResource extends TerraformResource {
+  public static readonly tfResourceType: string = "test_resource";
+
+  /**
+   * AWS CloudFormation resource properties.
+   *
+   * This object is returned via cfnProperties
+   * @internal
+   */
+  protected readonly _properties: any;
+  constructor(scope: Construct, id: string, config: TestResourceConfig) {
+    super(scope, id, {
+      terraformResourceType: "test_resource",
+      terraformGeneratorMetadata: {
+        providerName: TestProviderMetadata.TYPE,
+        providerVersionConstraint: "~> 2.0",
+      },
+      provider: config.provider,
+      dependsOn: config.dependsOn,
+      count: config.count,
+      lifecycle: config.lifecycle,
+      provisioners: config.provisioners,
+      forEach: config.forEach,
+    });
+    this._properties = config.properties || {};
+  }
+
+  public get names(): string[] {
+    return this.getListAttribute("names");
+  }
+
+  protected synthesizeAttributes(): { [name: string]: any } {
+    return this._properties;
+  }
+}
+"
+}"
+`;
