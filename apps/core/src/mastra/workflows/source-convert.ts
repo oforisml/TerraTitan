@@ -3,28 +3,26 @@ import { z } from 'zod';
 
 import { sourceConverter } from '../agents/source-converter/index.js';
 
+export const sourceConversionSchema = z.object({
+  inputFile: z.string(),
+  inputRefFiles: z.array(z.string()), // TODO: Auto determine
+  outputRefFiles: z.array(z.string()), // TODO: Auto determine
+  outputPath: z.string().optional(),
+});
+
 /**
  * A step to convert source code from AWS CDK to TerraConstructs
  */
-const convertSourceCode = new Step({
+export const convertSourceCode = new Step({
   id: 'convertSourceCode',
   inputSchema: z.object({
-    inputFile: z.string(),
-    inputRefFiles: z.array(z.string()),
-    outputRefFiles: z.array(z.string()),
+    conversion: sourceConversionSchema,
   }),
   outputSchema: z.object({
     code: z.string(),
   }),
   execute: async ({ context }) => {
-    const inputFile = context.triggerData.inputFile as string;
-    const inputRefFiles = context.triggerData.inputRefFiles as string[];
-    const outputRefFiles = context.triggerData.outputRefFiles as string[];
-    return await sourceConverter.convert({
-      inputFile,
-      inputRefFiles,
-      outputRefFiles,
-    });
+    return await sourceConverter.convert(context.inputData.conversion);
   },
 });
 
@@ -37,16 +35,13 @@ const convertSourceCode = new Step({
 export const sourceConversionWorkflow = new Workflow({
   name: 'source-conversion-workflow',
   triggerSchema: z.object({
-    inputFile: z.string(),
-    inputRefFiles: z.array(z.string()),
-    outputRefFiles: z.array(z.string()),
+    conversion: sourceConversionSchema,
   }),
 });
 
-// TODO: Add steps to prepare the workspace
-// TODO: Add steps to prepare requestProps
-// TODO: Add steps to write the file to the workspace
+// TODO: Add steps to prepare inputRefFiles & outputRefFiles
 sourceConversionWorkflow.step(convertSourceCode);
+// TODO: Evaluate the generated code against criteria to move to finish code conversion
 
 // Finalize the workflow
 sourceConversionWorkflow.commit();

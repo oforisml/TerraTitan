@@ -3,23 +3,26 @@ import { z } from 'zod';
 
 import { unitConverter } from '../agents/unit-converter/index.js';
 
+export const unitConversionSchema = z.object({
+  inputFile: z.string(),
+  inputRefFiles: z.array(z.string()), // TODO: Auto determine
+  outputRefFiles: z.array(z.string()), // TODO: Auto determine
+  outputPath: z.string().optional(),
+});
+
 /**
  * A step to convert unit tests from AWS CDK to TerraConstructs
  */
 const convertUnitTests = new Step({
   id: 'convertUnitTests',
   inputSchema: z.object({
-    inputFile: z.string(),
-    inputRefFiles: z.array(z.string()),
-    outputRefFiles: z.array(z.string()),
+    conversion: unitConversionSchema,
   }),
   outputSchema: z.object({
     code: z.string(),
   }),
   execute: async ({ context }) => {
-    const inputFile = context.triggerData.inputFile as string;
-    const inputRefFiles = context.triggerData.inputRefFiles as string[];
-    const outputRefFiles = context.triggerData.outputRefFiles as string[];
+    const { inputFile, inputRefFiles, outputRefFiles } = context.triggerData;
     return await unitConverter.convert({
       inputFile,
       inputRefFiles,
@@ -37,9 +40,7 @@ const convertUnitTests = new Step({
 export const unitConversionWorkflow = new Workflow({
   name: 'source-conversion-workflow',
   triggerSchema: z.object({
-    inputFile: z.string(),
-    inputRefFiles: z.array(z.string()),
-    outputRefFiles: z.array(z.string()),
+    conversion: unitConversionSchema,
   }),
 });
 
@@ -47,6 +48,8 @@ export const unitConversionWorkflow = new Workflow({
 // TODO: Add steps to prepare requestProps
 // TODO: Add steps to write the file to the workspace
 unitConversionWorkflow.step(convertUnitTests);
+// TODO: Evaluate the generated code against criteria to move to the next step
+// TODO: Start loop on resolving issues
 
 // Finalize the workflow
 unitConversionWorkflow.commit();
