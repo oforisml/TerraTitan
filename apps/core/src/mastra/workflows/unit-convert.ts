@@ -38,7 +38,7 @@ const convertUnitTests = new Step({
  * It uses the `convertSourceCode` step to convert the source code.
  */
 export const unitConversionWorkflow = new Workflow({
-  name: 'source-conversion-workflow',
+  name: 'unit-conversion-workflow',
   triggerSchema: z.object({
     conversion: unitConversionSchema,
   }),
