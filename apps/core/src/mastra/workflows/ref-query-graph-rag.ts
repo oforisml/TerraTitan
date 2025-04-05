@@ -1,16 +1,27 @@
+/**
+ * Load and Query chunked CDKTF AWS resources embeddings with Mastra's GraphRAG
+ *
+ * This script loads chunks from disk into the GraphRAG structure,
+ * then queries the graph using the full TypeScript interface declaration for CfnTargetGroupProps.
+ *
+ * The embedding per CDKTF Resource includes
+ * - Summary section from the Markdown doc files.
+ * - Arguments data from the Markdown doc files.
+ *
+ * It retrieves the top 5 related nodes based on the query and prints their details.
+ */
 import * as fs from 'fs';
 import * as path from 'path';
 import { openai } from '@ai-sdk/openai';
 import { GraphRAG } from '@mastra/rag';
 import { embed } from 'ai';
-import { filterGeneratedModule, gitRoot } from './../util/helpers.js';
+import { filterGeneratedModule, gitRoot } from '../util/helpers.js';
+import { TiktokenModel } from 'tiktoken';
 import { TokenCounter } from '../util/tiktoken.js';
-
+import { OPENAI_EMBED_MAX_TOKENS } from './util.js';
 import dotenv from 'dotenv';
-dotenv.config();
 
-// OpenAI's limit for 'text-embedding-3-small' / 'text-embedding-3-large'
-const maxTokens = 8191;
+dotenv.config();
 
 // if output file exists, load it instead of rebuilding it
 const outputDir = path.join(process.cwd(), 'output');
@@ -18,22 +29,20 @@ if (!fs.existsSync(outputDir)) {
   throw new Error(`Output directory ${outputDir} does not exist.`);
 }
 
+const embeddingModel = 'text-embedding-3-large' as TiktokenModel;
 // dimensions - ref https://sdk.vercel.ai/docs/ai-sdk-core/embeddings#embedding-providers--models
 // By default, the length of the embedding vector is 1536 for 'text-embedding-3-small' or 3072 for 'text-embedding-3-large'
-const dimensions = 1536;
-const embeddingModel = 'text-embedding-3-small';
+const dimensions = embeddingModel === 'text-embedding-3-large' ? 3072 : 1536;
 const counter = new TokenCounter(embeddingModel);
 
 const chunksForGraphOutput = path.join(outputDir, `aws-resources-${embeddingModel}.json`);
 if (!fs.existsSync(chunksForGraphOutput)) {
   throw new Error(`Chunks file ${chunksForGraphOutput} does not exist.`);
 }
-// Load the Graph chunks from the file
 const chunksForGraph = JSON.parse(fs.readFileSync(chunksForGraphOutput, 'utf-8'));
 
-// Create GraphRag
-// https://github.com/mastra-ai/mastra/blob/%40mastra/rag%400.1.14/packages/rag/src/graph-rag/index.ts#L149
 // Initialize GraphRAG
+// https://github.com/mastra-ai/mastra/blob/%40mastra/rag%400.1.14/packages/rag/src/graph-rag/index.ts#L149
 const graphRag = new GraphRAG(
   dimensions,
   // Similarity threshold for creating edges between nodes (0-1)
@@ -42,24 +51,23 @@ const graphRag = new GraphRAG(
 // This builds the relationships based on embedding similarity
 graphRag.createGraph(chunksForGraph, chunksForGraph);
 
-// --- Query Time ---
+// --- Sample Query ---
 
 const awsCdkPkgDir = path.join(gitRoot, 'data', 'reference', 'declarations', 'aws-cdk-lib');
 const refFile = path.join(awsCdkPkgDir, 'aws-elasticloadbalancingv2', 'lib', 'elasticloadbalancingv2.generated.d.ts');
 const refContents = fs.readFileSync(refFile, 'utf-8');
-const filteredContents = filterGeneratedModule(refContents, ['CfnTargetGroupProps']);
+const filteredReferenceData = filterGeneratedModule(refContents, ['CfnTargetGroup']);
 
 const userQueryText = `
-  CloudFormation CfnTargetGroupProps:
-  ${filteredContents}
-  What is the equivalent CDKTF resource for this?
+  What CDKTF Resources are relevant to CloudFormation CfnTargetGroup:
+  ${filteredReferenceData}
 `;
 
-const [filteredContentsCount = 0, userQueryTextCount = 0] = counter.count(filteredContents, userQueryText);
+const [filteredContentsCount = 0, userQueryTextCount = 0] = counter.count(filteredReferenceData, userQueryText);
 console.log(`filtered Contents Tokens:  ${filteredContentsCount}`);
 console.log(`userQueryTextCount Tokens: ${userQueryTextCount}`);
-if (userQueryTextCount > maxTokens) {
-  throw new Error(`Filtered contents exceeds embdding model max tokens: ${userQueryTextCount} > ${maxTokens}`);
+if (userQueryTextCount > OPENAI_EMBED_MAX_TOKENS) {
+  throw new Error(`User Query exceeds embedding model max tokens: ${userQueryTextCount} > ${OPENAI_EMBED_MAX_TOKENS}`);
 }
 
 const { embedding: queryEmbedding } = await embed({
@@ -83,6 +91,7 @@ results.forEach(node => {
   console.log(`Score: ${node.score}`);
   console.log(`FQN: ${node.metadata?.fqn}`);
   console.log(`subcategory: ${node.metadata?.subcategory}`);
+  console.log(`subcategory: ${node.metadata?.sourceFile}`);
   console.log(`content: ${node.content.substring(0, 100) + '...'}`); // Show some content
   console.log('---');
 });

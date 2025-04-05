@@ -50,10 +50,10 @@ Retrieval Augmented Prompt generation with Vector embeddings. To set up your loc
 
 Initial approach on what to embed:
 
-1. Used [JSII Reflect](https://github.com/aws/jsii/tree/main/packages/jsii-reflect) to load the `@cdktf/provider-aws` library of resources and parse into a json file (added linking to the actual markdown Typescript documentation).
-1. Defined textToEmbed structure per Resource.
-1. Calculated the Token size for each resource (most fit within the OpenAI embedding model token limits, this suggests chunking by resource will fit)
-1. Evaluated buckets of Resource textToEmbed token counts as follows:
+1. Used [JSII Reflect](https://github.com/aws/jsii/tree/main/packages/jsii-reflect) to load the `@cdktf/provider-aws` library of resources and parse into a json file (also loaded actual markdown Typescript documentation).
+1. Defined initial `textToEmbed` structure per Resource and captured current Token count to determine chunking strategy.
+1. Calculated the Token size for each resource (considering OpenAI embedding model token limits, this suggested chunking by resource should work)
+1. Evaluated buckets of Resource `textToEmbed` token counts as follows:
 
    ```bash
    jq '
@@ -71,7 +71,7 @@ Initial approach on what to embed:
    ' ./output/aws-resources.json
    ```
 
-   Buckets:
+   Initial strategy buckets:
 
    ```json
    [
@@ -94,24 +94,49 @@ Initial approach on what to embed:
    ]
    ```
 
-   This suggests a batch size of 1000 chunks per `embedMany` call should not exceed the Tier1 OpenAI Embedding Rate limit of TPM Limit: 1,000,000 tokens/minute. (decided to use a conservative 300 resources per embedding call)
+   This suggests a batch size of 1000 chunks per `embedMany` API call should not exceed the `Tier 1` OpenAI Embedding Rate limit of TPM Limit: 1,000,000 tokens/minute. (decided to use a conservative 300 resources per embedding call)
 
 > [!WARNING]
 > Upstash Upsert batch size has a maximum of `1,000` items!
 
 ```console
-# requires Upstash Token for selected embeddingModel...
-pnpx tsx src/mastra/workflows/embed.ts
+# First pass: Load npm pkg information and augment with TF Provider Markdown docs
+pnpx tsx src/mastra/workflows/ref-prase-jsii.ts
+
+# Generate embedding vectors and upsert into Upstash
+# (requires OpenAI API key and Upstash Token for desired index)
+pnpx tsx src/mastra/workflows/ref-embed.ts
+
+# Generate embedding (but don't index) from
+# - Resource Name
+# - Markdown Resource Summary only (don't include Resource Arguments)
+pnpx tsx src src/mastra/workflows/ref-embed-summary.ts
 ```
 
-Creates: `outputs/aws-resources-text-embedding-3-small.json` (gitignored).
+Creates (gitignored):
 
-### Graph Rag queries
+- `outputs/aws-resources-text-embedding-3-large.json` ~99MB @ $0.13 / million Tokens
+- `outputs/aws-resources-text-embedding-3-small.json` ~53MB @ $0.02 / million Tokens
+- `outputs/aws-resources-summary-text-embedding-3-small.json` ~50MB @ $0.02 / million Tokens
+
+### Graph RAG queries
 
 Used [Mastra: GraphRAG](https://mastra.ai/docs/reference/rag/graph-rag) feature to test relevance queries. (Requires OpenAI key, but no Upstash queries are used).
 
-Note: `outputs/aws-resources-text-embedding-3-small.json` must exist (gitignored).
+> [!WARNING]
+> Appropriate `outputs/aws-resources-*.json` must exist (gitignored).
+
+To run a local Graph RAG query using the full Cfn TS Interface Declaration signature:
 
 ```console
-pnpx tsx src/mastra/workflows/query-graph-rag.ts
+pnpx tsx src/mastra/workflows/ref-query-graph-rag.ts
+```
+
+> [!WARNING]
+> Appropriate `outputs/aws-resources-summary-*.json` must exist (gitignored).
+
+To run a local Graph RAG query using the JSDocs of ahe Cfn TS Class Declaration only:
+
+```console
+pnpx tsx src/mastra/workflows/ref-query-summary-graph-rag.ts
 ```
