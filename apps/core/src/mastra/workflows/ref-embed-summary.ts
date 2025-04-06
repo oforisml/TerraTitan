@@ -12,31 +12,17 @@ import { EmbeddingModelV1Embedding } from '@ai-sdk/provider';
 import { embedMany } from 'ai';
 import { TokenCounter } from '../util/tiktoken.js';
 import { ParsedResource } from './ref-parse-jsii.js';
-import { OPENAI_EMBED_MAX_TOKENS } from './util.js';
+import { loadJsonSync, OPENAI_EMBED_MAX_TOKENS, ResourceChunk, ResourceEmbedding, ResourceMetadata } from './util.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const embeddingModel = 'text-embedding-3-small';
 const dimensions = 1536; // default for 'text-embedding-3-small'
+const outputDir = path.join(process.cwd(), 'output');
 
 // file to read from ref-parse-jsii.ts script
-const fileName = 'aws-resources';
-
-// if output file exists, load it instead of rebuilding it
-const outputDir = path.join(process.cwd(), 'output');
-if (!fs.existsSync(outputDir)) {
-  fs.mkdirSync(outputDir);
-}
-const inputFile = path.join(outputDir, fileName + '.json');
-if (!fs.existsSync(inputFile)) {
-  console.log('Missing inputFile:', inputFile);
-  console.log('Run ref-parse script first?');
-  process.exit(0);
-}
-
-const cache = fs.readFileSync(inputFile, 'utf-8');
-const parsedResources: ParsedResource[] = JSON.parse(cache);
+const parsedResources = loadJsonSync<ParsedResource[]>(outputDir, 'aws-resources.json');
 console.log('Loaded existing resources: ', parsedResources.length);
 
 const counter = new TokenCounter(embeddingModel);
@@ -139,7 +125,7 @@ console.log(`Embedding process finished. Total embeddings generated: ${allEmbedd
 // locally store graphChunks for Mastra's graphRag Queries
 // Combining all embeddings with resource metadata
 // Ensure the order matches embeddedResources and allEmbeddings
-const chunksForGraph = embeddedResources.map((resource, index) => ({
+const chunksForGraph: ResourceChunk[] = embeddedResources.map((resource, index) => ({
   text: resource.text,
   metadata: resource.metadata,
   vector: allEmbeddings[index]!,
@@ -147,39 +133,3 @@ const chunksForGraph = embeddedResources.map((resource, index) => ({
 const chunksForGraphOutput = path.join(outputDir, `aws-resources-summary-${embeddingModel}.json`);
 fs.writeFileSync(chunksForGraphOutput, JSON.stringify(chunksForGraph, null, 2));
 console.log('Wrote to ' + chunksForGraphOutput);
-
-// filtered data for embedding
-export interface ResourceEmbedding {
-  text: string;
-  tokenCount: number;
-  metadata: ResourceMetadata;
-}
-
-export interface ResourceMetadata {
-  /**
-   * The fully qualified name of the resource.
-   * This is used as a unique identifier for the resource.
-   */
-  fqn: string;
-  /**
-   * The name of the resource from JSII schema.
-   */
-  name: string;
-  /**
-   * The Sub Category based on the Markdown documentation
-   */
-  subcategory?: string;
-  /**
-   * The URL to the resource documentation.
-   */
-  url?: string;
-  /**
-   * The source file where the resource is defined from the jsii schema.
-   */
-  sourceFile?: string;
-  /**
-   * The original text used for embedding.
-   * This is useful for debugging or if the embedding strategy changes in the future.
-   */
-  originalText: string;
-}

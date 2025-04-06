@@ -15,29 +15,24 @@ import { Project } from 'ts-morph';
 import { gitRoot } from '../util/helpers.js';
 import { TiktokenModel } from 'tiktoken';
 import { TokenCounter } from '../util/tiktoken.js';
-import { OPENAI_EMBED_MAX_TOKENS } from './util.js';
+import { OPENAI_EMBED_MAX_TOKENS, ResourceChunk, ResourceMetadata } from './util.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// if output file exists, load it instead of rebuilding it
-const outputDir = path.join(process.cwd(), 'output');
-if (!fs.existsSync(outputDir)) {
-  throw new Error(`Output directory ${outputDir} does not exist.`);
-}
-
 const embeddingModel = 'text-embedding-3-small' as TiktokenModel;
-// dimensions - ref https://sdk.vercel.ai/docs/ai-sdk-core/embeddings#embedding-providers--models
-// By default, the length of the embedding vector is 1536 for 'text-embedding-3-small' or 3072 for 'text-embedding-3-large'
-const dimensions = embeddingModel === 'text-embedding-3-large' ? 3072 : 1536;
-const counter = new TokenCounter(embeddingModel);
-
+// load chunks from disk
+const outputDir = path.join(process.cwd(), 'output');
 const chunksForGraphOutput = path.join(outputDir, `aws-resources-summary-${embeddingModel}.json`);
 if (!fs.existsSync(chunksForGraphOutput)) {
   throw new Error(`Chunks file ${chunksForGraphOutput} does not exist.`);
 }
-const chunksForGraph = JSON.parse(fs.readFileSync(chunksForGraphOutput, 'utf-8'));
+const chunksForGraph = JSON.parse(fs.readFileSync(chunksForGraphOutput, 'utf-8')) as ResourceChunk[];
 
+// dimensions - ref https://sdk.vercel.ai/docs/ai-sdk-core/embeddings#embedding-providers--models
+// By default, the length of the embedding vector is 3072 for 'text-embedding-3-large' or 1536 for 'text-embedding-3-small'
+const dimensions = embeddingModel === 'text-embedding-3-large' ? 3072 : 1536;
+const counter = new TokenCounter(embeddingModel);
 // Initialize GraphRAG
 // https://github.com/mastra-ai/mastra/blob/%40mastra/rag%400.1.14/packages/rag/src/graph-rag/index.ts#L149
 const graphRag = new GraphRAG(
@@ -105,8 +100,15 @@ const results = graphRag.query({
 console.log('Graph RAG Results:');
 results.forEach(node => {
   console.log(`Score: ${node.score}`);
-  console.log(`FQN: ${node.metadata?.fqn}`);
-  console.log(`subcategory: ${node.metadata?.subcategory}`);
-  console.log(`content: ${node.content.substring(0, 100) + '...'}`); // Show some content
+  const metadata = node.metadata as ResourceMetadata | undefined;
+  if (metadata) {
+    console.log(`FQN: ${metadata.fqn}`);
+    console.log(`subcategory: ${metadata.subcategory}`);
+    console.log(`sourceFile: ${metadata.sourceFile}`);
+    console.log(`originalText: ${metadata.originalText.substring(0, 100) + '...'}`);
+  } else {
+    console.warn('No metadata found for node:', node);
+    console.log(`content: ${node.content.substring(0, 100) + '...'}`); // Show some content
+  }
   console.log('---');
 });
