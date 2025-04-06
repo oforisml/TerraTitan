@@ -4,6 +4,14 @@ import { Mastra } from '@mastra/core';
 import { WorkflowContext, Step } from '@mastra/core/workflows';
 import { simpleGit, type SimpleGit } from 'simple-git';
 import { z } from 'zod';
+import { TiktokenModel } from 'tiktoken';
+
+/**
+ *  OpenAI's embedding token limit for
+ * - 'text-embedding-3-small'
+ * - 'text-embedding-3-large'
+ */
+export const OPENAI_EMBED_MAX_TOKENS = 8191;
 
 /**
  * The Workflow workspace
@@ -92,4 +100,70 @@ export function writeCodeFromStep(stepId: string): (context: { context: Workflow
     console.log(`Writing code from step ${stepId} to workspace ${resultPath}`);
     await fs.writeFile(resultPath, code);
   };
+}
+
+/**
+ * Upstash configuration.
+ *
+ * Determines the embedding model and dimensions.
+ */
+export interface UpstashConfig {
+  /**
+   * The URL of the Upstash vector index
+   */
+  upstashUrl: string;
+  /**
+   * The number of dimensions for the embedding model.
+   * This is typically 1536 for 'text-embedding-3-small' or 3072 for 'text-embedding-3-large'.
+   * @see https://sdk.vercel.ai/docs/ai-sdk-core/embeddings#embedding-providers--models
+   */
+  dimensions: number;
+  /**
+   * The token for authenticating with the Upstash vector database.
+   */
+  upstashToken: string | undefined;
+  /**
+   * The embedding model used for generating embeddings.
+   * This is typically 'text-embedding-3-small' or 'text-embedding-3-large'.
+   *
+   * must match the Upstash index config
+   */
+  embeddingModel: TiktokenModel;
+}
+
+/**
+ * Get the pre-configured Upstash configuration for the given index name.
+ *
+ * Indices must be created upfront and their configuration determines the embedding model and dimensions
+ *
+ * See .env.example for UPSTASH_TOKEN_xxx configuration
+ *
+ * pre-created Upstash indexnames for TerraTitan are
+ *
+ * - 'provider-aws-resources-small'
+ * - 'provider-aws-resources-large'
+ *
+ * @param indexName - The pre-created index on Upstash
+ */
+export function getUpstashConfig(indexName: string): UpstashConfig {
+  if (indexName === 'provider-aws-resources-small') {
+    return {
+      dimensions: 1536,
+      // mastra has built-in support for cohere and openai,
+      // may reconsider later based on:
+      // https://huggingface.co/spaces/mteb/leaderboard
+      embeddingModel: 'text-embedding-3-small',
+      upstashUrl: 'https://deep-molly-68135-us1-vector.upstash.io',
+      upstashToken: process.env.UPSTASH_TOKEN_SMALL,
+    };
+  } else if (indexName === 'provider-aws-resources-large') {
+    return {
+      dimensions: 3072,
+      embeddingModel: 'text-embedding-3-large',
+      upstashUrl: 'https://pretty-marmot-55613-us1-vector.upstash.io',
+      upstashToken: process.env.UPSTASH_TOKEN_LARGE,
+    };
+  } else {
+    throw new Error(`Unknown Upstash index name: ${indexName}`);
+  }
 }
