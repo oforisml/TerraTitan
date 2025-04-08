@@ -49,12 +49,15 @@ const store = new UpstashVector({
 
 const awsCdkPkgDir = path.join(gitRoot, 'data', 'reference', 'declarations', 'aws-cdk-lib');
 const refFile = path.join(awsCdkPkgDir, 'aws-elasticloadbalancingv2', 'lib', 'elasticloadbalancingv2.generated.d.ts');
+const refClass = 'CfnTargetGroup';
+// const refClass = 'CfnTopic';
+// const refFile = path.join(awsCdkPkgDir, 'aws-sns', 'lib', 'sns.generated.d.ts');
 
-// get JSDoc for CfnTargetGroup class only
+// get JSDoc for ${refClass} only
 const project = new Project();
 const sourceFile = project.addSourceFileAtPath(refFile);
 const jsDocs = sourceFile
-  .getClassOrThrow('CfnTargetGroup')
+  .getClassOrThrow(refClass)
   .getJsDocs()
   .map(jsDoc => jsDoc.getInnerText())
   .join('\n');
@@ -63,16 +66,9 @@ console.log('JSDoc:', jsDocs);
 
 // const userQueryText = jsDocs;
 const userQueryText = `
-    What CDKTF Resources are relevant to CfnTargetGroup:
+    What CDKTF Resources are relevant to ${refClass}:
     ${jsDocs}
   `;
-// const refContents = fs.readFileSync(refFile, 'utf-8');
-// const filteredReferenceData = filterGeneratedModule(refContents, ['CfnTargetGroupProps']);
-
-// const userQueryText = `
-//   What CDKTF Resources are relevant to CloudFormation CfnTargetGroup:
-//   ${filteredReferenceData}
-// `;
 
 const [jsDocsCount = 0, userQueryTextCount = 0] = counter.count(jsDocs, userQueryText);
 console.log(`User Query: ${userQueryText}`);
@@ -96,6 +92,10 @@ try {
     queryVector: queryEmbedding,
     includeVector: true, // required for reranking
     topK: 10, // Retrieve top 10 related nodes (adjust as needed)
+    // filter: {
+    //   // TODO: Use LLM to select TF Docs sub category from list of unique values?
+    //   subcategory: 'SNS (Simple Notification)',
+    // },
   });
 } catch (error) {
   if (error instanceof Error) {
@@ -104,20 +104,20 @@ try {
   }
 }
 
-// original results
-console.log('Store Query Results (top 10):');
-results.forEach(result => {
-  console.log(`Score: ${result.score}`);
-  const metadata = result.metadata as ResourceMetadata | undefined;
-  if (metadata) {
-    console.log(`FQN: ${metadata.fqn}`);
-    console.log(`subcategory: ${metadata.subcategory}`);
-    console.log(`sourceFile: ${metadata.sourceFile}`);
-    console.log(`originalText: ${metadata.originalText.substring(0, 100) + '...'}`);
-  }
-  // console.log(`content: ${result.document?.substring(0, 100) + '...' || 'empty document'}`); // Show some content
-  console.log('---');
-});
+// // original results
+// console.log('Store Query Results (top 10):');
+// results.forEach(result => {
+//   console.log(`Score: ${result.score}`);
+//   const metadata = result.metadata as ResourceMetadata | undefined;
+//   if (metadata) {
+//     console.log(`FQN: ${metadata.fqn}`);
+//     console.log(`subcategory: ${metadata.subcategory}`);
+//     console.log(`sourceFile: ${metadata.sourceFile}`);
+//     console.log(`originalText: ${metadata.originalText.substring(0, 100) + '...'}`);
+//   }
+//   // console.log(`content: ${result.document?.substring(0, 100) + '...' || 'empty document'}`); // Show some content
+//   console.log('---');
+// });
 
 /**
  * For semantic scoring to work properly during re-ranking, each result must include the text content in its metadata.text field.
@@ -137,25 +137,30 @@ const queryResult = results.map(node => {
     vector: node.vector,
   };
 });
+// NOTE: rerank will call model for every chunk (10 times in this case!)
 const rerankedResults = await rerank(queryResult, userQueryText, openai('gpt-4o-mini'), {
   topK: 5,
+  queryEmbedding,
 });
 
-// top 5 re-ranked results
+// top 5 re-ranked results with a score > 0.5
 console.log('#####################');
-console.log('Reranked RAG Results (top 5):');
-rerankedResults.forEach(reranked => {
-  const result = reranked.result;
-  console.log(`ReRanked Score: ${reranked.score}`);
-  // console.log(`ReRanked details: ${JSON.stringify(reranked.details, null, 2)}`);
-  console.log(`Original Score: ${result.score}`);
-  const metadata = result.metadata as ResourceMetadata | undefined;
-  if (metadata) {
-    console.log(`FQN: ${metadata.fqn}`);
-    console.log(`subcategory: ${metadata.subcategory}`);
-    console.log(`sourceFile: ${metadata.sourceFile}`);
-    console.log(`originalText: ${metadata.originalText.substring(0, 100) + '...'}`);
-  }
-  // console.log(`content: ${result.document?.substring(0, 100) + '...' || 'empty document'}`); // Show some content
-  console.log('---');
-});
+console.log('Reranked RAG Results (top 5, min 0.5):');
+rerankedResults
+  // Filter out results with score <= 0.5
+  .filter(result => result.score > 0.5)
+  .forEach(reranked => {
+    const result = reranked.result;
+    console.log(`ReRanked Score: ${reranked.score}`);
+    // console.log(`ReRanked details: ${JSON.stringify(reranked.details, null, 2)}`);
+    console.log(`Original Score: ${result.score}`);
+    const metadata = result.metadata as ResourceMetadata | undefined;
+    if (metadata) {
+      console.log(`FQN: ${metadata.fqn}`);
+      console.log(`subcategory: ${metadata.subcategory}`);
+      console.log(`sourceFile: ${metadata.sourceFile}`);
+      console.log(`originalText: ${metadata.originalText.substring(0, 100) + '...'}`);
+    }
+    // console.log(`content: ${result.document?.substring(0, 100) + '...' || 'empty document'}`); // Show some content
+    console.log('---');
+  });

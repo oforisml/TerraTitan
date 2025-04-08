@@ -19,7 +19,7 @@ const isDryRun = args.includes("--dry-run");
 // });
 
 const geminiSourceFlow = new GeminiFlow({
-  model: GEMINI_MODEL.GEMINI_2_5_PRO_EXP_03_25,
+  model: GEMINI_MODEL.GEMINI_2_5_PRO_PREVIEW_03_25,
   generationConfig: {
     temperature: 0,
     topP: 0.95,

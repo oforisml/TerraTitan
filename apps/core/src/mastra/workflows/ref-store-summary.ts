@@ -59,6 +59,8 @@ function getObjectSizeInBytes(obj: any): number {
 }
 
 // Batch resources to store
+// TODO: use async-sema RateLimnit imstead
+// ref: https://chatgpt.com/share/67f55889-42d0-800f-9a8a-369fbfbb5cdd
 const batchSize = 500;
 const batchCount = Math.ceil(summaryChunks.length / batchSize);
 console.log(`Starting store process for ${summaryChunks.length} chunks...`);
