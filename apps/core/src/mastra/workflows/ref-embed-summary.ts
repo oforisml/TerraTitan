@@ -28,16 +28,6 @@ console.log('Loaded existing resources: ', parsedResources.length);
 const counter = new TokenCounter(embeddingModel);
 const resourcesToEmbed: ResourceEmbedding[] = parsedResources
   .map(resource => {
-    // Prepare metadata - store essential original info
-    const metadata: ResourceMetadata = {
-      fqn: resource.fqn, // use fqn to retreive original resource from json file
-      name: resource.name,
-      subcategory: resource.docs.subcategory,
-      url: resource.docs.url,
-      sourceFile: resource.sourceFile,
-      originalText: resource.textToEmbed, // in case embedding strategy is changed
-    };
-
     // Consider adding more fields or structuring differently
     const textToEmbed = `
       Name: ${resource.name}
@@ -49,6 +39,17 @@ const resourcesToEmbed: ResourceEmbedding[] = parsedResources
     if (textToEmbedCount > OPENAI_EMBED_MAX_TOKENS) {
       console.warn(`Text to embed for ${resource.fqn} exceeds ${OPENAI_EMBED_MAX_TOKENS} tokens: ${textToEmbedCount}`);
     }
+    // Prepare metadata - store essential original info
+    const metadata: ResourceMetadata = {
+      fqn: resource.fqn, // use fqn to retreive original resource from json file
+      name: resource.name,
+      subcategory: resource.docs.subcategory,
+      url: resource.docs.url,
+      sourceFile: resource.sourceFile,
+      // TODO: Should be "text" instead of "originalText" for reranking
+      originalText: textToEmbed, // resource.textToEmbed, // in case embedding strategy is changed
+    };
+
     return {
       text: textToEmbed,
       tokenCount: textToEmbedCount,

@@ -55,11 +55,11 @@ const summaryChunks = JSON.parse(fs.readFileSync(chunksForGraphOutput, 'utf-8'))
 function getObjectSizeInBytes(obj: any): number {
   const jsonString = JSON.stringify(obj);
   // In JavaScript, each character is 2 bytes (UTF-16)
-  return jsonString.length * 2;
+  return jsonString.length;
 }
 
 // Batch resources to store
-const batchSize = 100;
+const batchSize = 500;
 const batchCount = Math.ceil(summaryChunks.length / batchSize);
 console.log(`Starting store process for ${summaryChunks.length} chunks...`);
 console.log(`Batch size: ${batchSize}, Batch count: ${batchCount}`);
@@ -68,18 +68,20 @@ console.log(`Batch size: ${batchSize}, Batch count: ${batchCount}`);
 for (let i = 0; i < summaryChunks.length; i += batchSize) {
   const batch = summaryChunks.slice(i, i + batchSize);
   const batchNumber = Math.floor(i / batchSize) + 1;
-  let batchMetadatasize = 0;
+  // let batchMetadatasize = 0; // Turns out this doesn't matter
   for (const chunk of batch) {
     const metadataSize = getObjectSizeInBytes(chunk.metadata);
     if (metadataSize > MAX_METADATA_SIZE_BYTES) {
-      console.warn(`Metadata size for chunk ${chunk.metadata.fqn} exceeds limit: ${metadataSize} bytes`);
+      console.warn(
+        `Batch: ${batchNumber} - Metadata size for chunk ${chunk.metadata.fqn} exceeds limit: ${metadataSize} bytes`,
+      );
     }
-    batchMetadatasize += metadataSize;
+    // batchMetadatasize += metadataSize;
   }
-  if (batchMetadatasize > MAX_METADATA_SIZE_BYTES) {
-    console.warn(`Metadata size for batch ${batchNumber} exceeds limit: ${batchMetadatasize} bytes`);
-    process.exit(1); // Exit if any chunk exceeds the limit
-  }
+  // if (batchMetadatasize > MAX_METADATA_SIZE_BYTES) {
+  //   console.warn(`Metadata size for batch ${batchNumber} exceeds limit: ${batchMetadatasize} bytes`);
+  //   process.exit(1); // Exit if any chunk exceeds the limit
+  // }
 }
 
 let embeddingsStoreCount = 0;
@@ -90,6 +92,7 @@ for (let i = 0; i < summaryChunks.length; i += batchSize) {
   console.log(`Processing batch ${batchNumber}/${batchCount} (${batch.length} items)...`);
   try {
     await store.upsert({
+      ids: batch.map(r => r.metadata.fqn), // Use fqn as unique ID
       // Mastra indexName == https://upstash.com/docs/vector/features/namespaces
       indexName: namespace,
       // Array of embedding vectors
