@@ -1,5 +1,7 @@
 import path from 'path';
 import fs from 'fs/promises';
+import fsSync from 'fs';
+import { EmbeddingModelV1Embedding } from '@ai-sdk/provider';
 import { Mastra } from '@mastra/core';
 import { WorkflowContext, Step } from '@mastra/core/workflows';
 import { simpleGit, type SimpleGit } from 'simple-git';
@@ -64,7 +66,7 @@ export const ensureWorkspace = new Step({
       }
       console.log(`Repository ${repositoryUrl} already exists in ${targetDir}`);
     }
-    // TODO: Run pnpm install in workspace...
+    // TODO: Run `pnpm install` in workspace...
     return { targetDir };
   },
 });
@@ -166,4 +168,76 @@ export function getUpstashConfig(indexName: string): UpstashConfig {
   } else {
     throw new Error(`Unknown Upstash index name: ${indexName}`);
   }
+}
+
+/**
+ * Load a JSON file synchronously.
+ *
+ * NOTE: This does not validate the JSON structure, only casts it to the specified type.
+ */
+export function loadJsonSync<T>(dir: string, fileName: string): T {
+  const filePath = path.join(dir, fileName);
+  if (!fsSync.existsSync(filePath)) {
+    console.log('Missing inputFile:', filePath);
+    console.log('Run ref-parse script first?');
+    process.exit(0);
+  }
+  const fileContent = fsSync.readFileSync(filePath, 'utf-8');
+  // TODO: Use zod to validate the JSON structure
+  return JSON.parse(fileContent) as T;
+}
+
+export interface ResourceMetadata {
+  /**
+   * The fully qualified name of the resource.
+   * This is used as a unique identifier for the resource.
+   */
+  fqn: string;
+  /**
+   * The name of the resource from JSII schema.
+   */
+  name: string;
+  /**
+   * The Sub Category based on the Markdown documentation
+   */
+  subcategory?: string;
+  /**
+   * The URL to the resource documentation.
+   */
+  url?: string;
+  /**
+   * The source file where the resource is defined from the jsii schema.
+   */
+  sourceFile?: string;
+  /**
+   * The original text used for embedding.
+   * This is useful for debugging or if the embedding strategy changes in the future.
+   */
+  originalText: string; // TODO: Fix text content for reranking should be in metadata.text
+}
+
+/**
+ * Input for embedding a resource.
+ */
+export interface ResourceEmbedding {
+  text: string;
+  metadata: ResourceMetadata;
+  /**
+   * The number of tokens in the text.
+   * This is used to determine if the text exceeds the maximum token limit for embedding.
+   */
+  tokenCount: number;
+}
+
+/**
+ * Output of embedding a resource.
+ *
+ * ResourceChunk is a chunk of text with metadata and an embedding vector.
+ *
+ * This is used to build a GraphRAG for the resources.
+ */
+export interface ResourceChunk {
+  text: string;
+  metadata: ResourceMetadata;
+  vector: EmbeddingModelV1Embedding;
 }
