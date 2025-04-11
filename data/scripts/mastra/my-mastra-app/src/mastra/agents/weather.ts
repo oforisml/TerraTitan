@@ -1,6 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { Agent } from "@mastra/core/agent";
-import { weatherTool } from "../../../../../mastra-workflow/src/mastra/tools/weather-tool";
+import { weatherTool } from "../tools";
 
 export const weatherAgent = new Agent({
   name: "Weather Agent",
