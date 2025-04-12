@@ -1,5 +1,13 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import { expect, test, describe } from 'vitest';
-import { filterGeneratedModule, findGeneratedImports, filterInputRefFile, kebabToTitleCase } from './helpers.js';
+import {
+  filterGeneratedModule,
+  findGeneratedImports,
+  filterInputRefFile,
+  kebabToTitleCase,
+  getClassJsDocs,
+} from './helpers.js';
 
 describe('kebabToTitleCase', () => {
   test('should convert kebab-case to TitleCase', () => {
@@ -187,3 +195,47 @@ export declare class SomeClass {
     expect(result.trim()).toBe('');
   });
 });
+
+describe('getClassJsDocs', () => {
+  test('should extract JSDoc comments for a class', () => {
+    const { tempDir, filePath: sourceFilePath } = createTempFile(`
+      /**
+       * This is a sample class.
+       */
+      export class SampleClass {
+        /**
+         * This is a sample method.
+         */
+        public sampleMethod() {}
+      }
+    `);
+
+    const result = getClassJsDocs(sourceFilePath, 'SampleClass');
+    expect(result).toContain('This is a sample class.');
+
+    removeTempDir(tempDir);
+  });
+
+  test('should throw if class is not found', () => {
+    const { tempDir, filePath: sourceFilePath } = createTempFile(`
+      export class AnotherClass {}
+    `);
+
+    expect(() => getClassJsDocs(sourceFilePath, 'NonExistentClass')).toThrow();
+
+    removeTempDir(tempDir);
+  });
+});
+
+function createTempFile(contents: string): { filePath: string; tempDir: string } {
+  const tempDir = fs.mkdtempSync(path.join(__dirname, 'temp-'));
+  const filePath = path.join(tempDir, 'temp.ts');
+  fs.writeFileSync(filePath, contents);
+  return {
+    filePath,
+    tempDir,
+  };
+}
+function removeTempDir(tempDir: string): void {
+  fs.rmSync(tempDir, { recursive: true, force: true });
+}

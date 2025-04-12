@@ -6,7 +6,7 @@
   "description": "LLM Workflow to convert AWS CDK Constructs to Terraform-CDK",
   "scripts": {
     "test": "vitest run",
-    "start": "tsx src/index.ts",
+    "start": "tsx --no-deprecation src/index.ts",
     "lint": "eslint",
     "dev": "mastra dev",
     "build": "mastra build"

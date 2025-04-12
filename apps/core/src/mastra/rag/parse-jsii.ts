@@ -16,10 +16,10 @@ import * as reflect from 'jsii-reflect';
 import { TiktokenModel } from 'tiktoken';
 import { hasPropsParam } from '../util/type-system/index.js';
 import { schemaForTypeReference } from '../util/type-system/jsii2schema.js';
-import { gitRoot } from './../util/helpers.js';
+import { gitRoot } from '../util/helpers.js';
 import { TokenCounter } from '../util/tiktoken.js';
 // used to generate warnings
-import { OPENAI_EMBED_MAX_TOKENS } from './util.js';
+import { OPENAI_EMBED_MAX_TOKENS } from '../util/rag.js';
 
 const fileName = 'aws-resources';
 

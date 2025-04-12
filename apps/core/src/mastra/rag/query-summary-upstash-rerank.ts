@@ -21,7 +21,7 @@ import { embed } from 'ai';
 import { Project } from 'ts-morph';
 import { gitRoot } from '../util/helpers.js';
 import { TokenCounter } from '../util/tiktoken.js';
-import { getUpstashConfig, OPENAI_EMBED_MAX_TOKENS, ResourceMetadata } from './util.js';
+import { getUpstashConfig, OPENAI_EMBED_MAX_TOKENS, ResourceMetadata } from '../util/rag.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

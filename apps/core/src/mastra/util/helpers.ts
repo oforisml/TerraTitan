@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { execSync } from 'child_process';
 import * as ts from 'typescript';
+import { Project } from 'ts-morph';
 
 // required for Hono / Dev Server ...
 // __dirname is not defined in ES module scope
@@ -225,4 +226,18 @@ export function filterInputRefFile(inputSource: string, inputRefSource: string):
   const filteredDeclarations = filterGeneratedModule(inputRefSource, symbolsToFilter);
 
   return filteredDeclarations;
+}
+
+/**
+ * Retrieve the JSDocs string representation for a single Class in a SourceFile
+ */
+export function getClassJsDocs(sourceFilePath: string, className: string): string {
+  // get JSDoc for ${refClass} only
+  const project = new Project();
+  const sourceFile = project.addSourceFileAtPath(sourceFilePath);
+  return sourceFile
+    .getClassOrThrow(className)
+    .getJsDocs()
+    .map(jsDoc => jsDoc.getInnerText())
+    .join('\n');
 }

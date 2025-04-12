@@ -12,7 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { UpstashVector } from '@mastra/upstash';
-import { getUpstashConfig, ResourceChunk } from './util.js';
+import { getUpstashConfig, ResourceChunk } from '../util/rag.js';
 import dotenv from 'dotenv';
 
 const MAX_METADATA_SIZE_BYTES = 49000; // Slightly under Upstash's 49152 limit

@@ -1,7 +1,14 @@
 import path from 'path';
+import { select, checkbox } from '@inquirer/prompts';
 import { mastra } from './mastra/index.js';
 import { gitRoot } from './mastra/util/helpers.js';
-import { type TriggerType } from './mastra/workflows/parent.js';
+import { type TriggerType as ConvertTriggertype } from './mastra/workflows/parent.js';
+import {
+  TriggerType as RefTriggerType,
+  RAGReviewType,
+  RerankedResultType,
+  RAGReviewDecisionType,
+} from './mastra/workflows/ref-wf.js';
 
 // TODO: Figure out why this is needed because Mastra should do this automatically...
 import dotenv from 'dotenv';
@@ -23,9 +30,13 @@ const mergedAwsDocs = path.join(gitRoot, 'data', 'reference', 'merged', 'provide
 // TODO: Use workflow steps to fetch markdown docs
 const tsAwsDocs = path.join(gitRoot, 'data', 'reference', 'docs', 'typescript', 'provider-aws', 'r');
 
-async function main() {
+/**
+ * Demo conversion workflow
+ * This workflow converts a CDK source file to a CDKTF source file.
+ */
+async function runConvertWf() {
   const parentWorkflow = mastra.getWorkflow('parentWorkflow');
-  const triggerData: TriggerType = {
+  const triggerData: ConvertTriggertype = {
     workspace: {
       id: 'aws-sns',
       repositoryUrl: 'https://github.com/TerraConstructs/base.git',
@@ -65,6 +76,7 @@ async function main() {
     ],
   };
 
+  console.log('Running Demo Conversion workflow...');
   // Trigger the parent workflow with the trigger data
   const { runId, start } = parentWorkflow.createRun();
   console.log('Run ID:', runId);
@@ -72,4 +84,116 @@ async function main() {
   console.log('Final output:', JSON.stringify(runResult.results, null, 2));
 }
 
-main();
+/**
+ * CDKTF Reference retrieval workflow
+ * This workflow retrieves CDKTF references for a given AWSCDK source file and class.
+ */
+async function runCdktfRefWf() {
+  const wf = mastra.getWorkflow('cdktfRefWorkflow');
+  const run = wf.createRun();
+  const triggerData: RefTriggerType = {
+    sourceFile: path.join(awsCdkPkgDir, 'aws-elasticloadbalancingv2', 'lib', 'elasticloadbalancingv2.generated.d.ts'),
+    sourceClass: 'CfnTargetGroup',
+  };
+
+  // Start the workflow with content that needs review
+  console.log('Running CDKTF Reference retrieval workflow...');
+  const result = await run.start({ triggerData });
+
+  const reviewStep = result.activePaths.get('reviewCdktfReferences');
+  // Check if workflow is suspended
+  if (reviewStep?.status === 'suspended') {
+    const { sourceFile, sourceClass, rerankedResults, message } = reviewStep?.suspendPayload as RAGReviewType;
+
+    console.log('\n===================================');
+    console.log(message);
+    console.log('===================================\n');
+
+    // Let the agent select which products to recommend
+    const approvedReferences = await checkbox({
+      message: 'Relevant CDKTF provider-aws resources',
+      choices: rerankedResults.map((ranked: RerankedResultType) => ({
+        name: `${ranked.id} (Reranked Score: ${ranked.rerankedScore.toFixed(2)} - Original Score: ${ranked.originalScore.toFixed(2)})`,
+        value: ranked.id,
+        checked: ranked.rerankedScore > 0.5,
+      })),
+    });
+
+    // TODO: Ability to modify the score (re-order)?
+
+    // filter out the selected references
+    const selectedReferences = rerankedResults.filter((ranked: RerankedResultType) =>
+      approvedReferences.includes(ranked.id),
+    );
+
+    // Resume the workflow after Human review
+    const resumeInput: RAGReviewDecisionType = {
+      sourceFile,
+      sourceClass,
+      rerankedResults: selectedReferences,
+    };
+    const resumeResult = await run.resume({
+      stepId: 'reviewCdktfReferences',
+      context: resumeInput,
+    });
+
+    if (resumeResult?.results?.reviewCdktfReferences?.status === 'success') {
+      console.log('\n===================================');
+      console.log('CDKTF Reference Selection complete');
+      console.log('===================================\n');
+
+      if (resumeResult?.results?.reviewCdktfReferences?.output.rerankedResults) {
+        console.log('Final References:');
+        console.log(resumeResult?.results?.reviewCdktfReferences?.output.rerankedResults);
+      }
+    }
+
+    return resumeResult;
+  }
+
+  if (result.results?.reviewCdktfReferences?.status && result.results.reviewCdktfReferences.status === 'success') {
+    console.log(
+      'Workflow completed without requiring human intervention:',
+      result.results?.reviewCdktfReferences?.output.rerankedResults,
+    );
+  } else {
+    console.log('Workflow completed without requiring human intervention:', result.results);
+  }
+  return result;
+}
+
+async function main() {
+  console.log('>>>TerraTitan CLI - PoC<<<');
+  const wfToRun = await select<'convert' | 'cdktfRef'>({
+    message: 'Select which workflow to run:',
+    choices: [
+      { name: 'Demo Conversion', value: 'convert' },
+      { name: 'CDKTF Reference retrieval', value: 'cdktfRef' },
+    ],
+  });
+  switch (wfToRun) {
+    case 'convert':
+      await runConvertWf();
+      break;
+    case 'cdktfRef':
+      await runCdktfRefWf();
+      break;
+    default:
+      console.log('Invalid workflow selected.');
+      break;
+  }
+
+  for (const [key, workflow] of Object.entries(mastra.getWorkflows())) {
+    // print summary of all workflow runs
+    const allRuns = await workflow.getWorkflowRuns();
+    const summary = allRuns.runs.map(run => ({
+      id: run.runId,
+      status: typeof run.snapshot === 'string' ? run.snapshot : run.snapshot.value,
+      createdAt: run.createdAt,
+      updatedAt: run.updatedAt,
+    }));
+    console.log(`All ${key} runs:`, JSON.stringify(summary, null, 2));
+  }
+}
+
+main().catch(console.error);

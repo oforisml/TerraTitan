@@ -11,8 +11,14 @@ import { openai } from '@ai-sdk/openai';
 import { EmbeddingModelV1Embedding } from '@ai-sdk/provider';
 import { embedMany } from 'ai';
 import { TokenCounter } from '../util/tiktoken.js';
-import { ParsedResource } from './ref-parse-jsii.js';
-import { loadJsonSync, OPENAI_EMBED_MAX_TOKENS, ResourceChunk, ResourceEmbedding, ResourceMetadata } from './util.js';
+import { ParsedResource } from './parse-jsii.js';
+import {
+  loadJsonSync,
+  OPENAI_EMBED_MAX_TOKENS,
+  ResourceChunk,
+  ResourceEmbedding,
+  ResourceMetadata,
+} from '../util/rag.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

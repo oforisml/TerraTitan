@@ -15,7 +15,7 @@ import { EmbeddingModelV1Embedding } from '@ai-sdk/provider';
 import { UpstashVector } from '@mastra/upstash';
 import { embedMany } from 'ai';
 import { TokenCounter } from '../util/tiktoken.js';
-import { ParsedResource } from './ref-parse-jsii.js';
+import { ParsedResource } from './parse-jsii.js';
 import {
   getUpstashConfig,
   loadJsonSync,
@@ -23,7 +23,7 @@ import {
   ResourceChunk,
   ResourceEmbedding,
   ResourceMetadata,
-} from './util.js';
+} from '../util/rag.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
