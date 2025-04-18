@@ -1,14 +1,15 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { execSync } from 'child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 import { Project } from 'ts-morph';
 
 // required for Hono / Dev Server ...
 // __dirname is not defined in ES module scope
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 // Get the git root directory
 export const gitRoot = execSync('git rev-parse --show-toplevel', {
@@ -39,6 +40,20 @@ export function dtsBaseName(file: string): string {
 export function cdktfBaseName(file: string): string {
   return path.basename(path.dirname(file));
 }
+
+/**
+ * Get the version of the aws-cdk-lib package
+ *
+ * @returns The version of the aws-cdk-lib package
+ */
+export async function getAwsCdkVersion(): Promise<string> {
+  const require = createRequire(import.meta.url);
+  const pkgPath = require.resolve('aws-cdk-lib/package.json');
+  const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+  // Strip leading ^, ~ etc.
+  return pkg.version.replace(/^[\^~]/, '');
+}
+
 /**
  * Simulate retrieval/filtering for prompting with relevant information
  *
