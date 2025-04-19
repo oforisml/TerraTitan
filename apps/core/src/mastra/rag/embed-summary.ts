@@ -11,8 +11,14 @@ import { openai } from '@ai-sdk/openai';
 import { EmbeddingModelV1Embedding } from '@ai-sdk/provider';
 import { embedMany } from 'ai';
 import { TokenCounter } from '../util/tiktoken.js';
-import { ParsedResource } from './ref-parse-jsii.js';
-import { loadJsonSync, OPENAI_EMBED_MAX_TOKENS, ResourceChunk, ResourceEmbedding, ResourceMetadata } from './util.js';
+import { ParsedResource } from './parse-jsii.js';
+import {
+  loadJsonSync,
+  OPENAI_EMBED_MAX_TOKENS,
+  ResourceChunk,
+  ResourceEmbedding,
+  ResourceMetadata,
+} from '../util/rag.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -74,6 +80,8 @@ const embeddedResources: ResourceEmbedding[] = [];
 console.log(`Starting embedding process for ${allResources.length} resources...`);
 console.log(`Batch size: ${batchSize}, Delay between batches: ${delayBetweenBatches / 1000}s`);
 
+// TODO: use async-sema RateLimnit imstead
+// ref: https://chatgpt.com/share/67f55889-42d0-800f-9a8a-369fbfbb5cdd
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**

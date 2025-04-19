@@ -13,7 +13,15 @@ export function isReasoningModel(model: OPENAI_MODEL | GEMINI_MODEL): boolean {
 }
 
 export enum GEMINI_MODEL {
+  /**
+   * Free, Rate limited: 2 requests per minute
+   */
   GEMINI_2_5_PRO_EXP_03_25 = "gemini-2.5-pro-exp-03-25",
+  /**
+   * Input $1.25 per 1M Tokens (< 200k tokens)
+   * Output $10.00 per 1M Tokens
+   */
+  GEMINI_2_5_PRO_PREVIEW_03_25 = "gemini-2.5-pro-preview-03-25",
 }
 
 /**
@@ -84,6 +92,7 @@ export function maxOutputTokens(model: OPENAI_MODEL): number {
   switch (model) {
     case OPENAI_MODEL.O3_MINI:
     case OPENAI_MODEL.O3_MINI_20250131:
+      return 200_000;
     case OPENAI_MODEL.O1:
     case OPENAI_MODEL.O1_20241217:
       return 100_000;

@@ -15,7 +15,7 @@ import { EmbeddingModelV1Embedding } from '@ai-sdk/provider';
 import { UpstashVector } from '@mastra/upstash';
 import { embedMany } from 'ai';
 import { TokenCounter } from '../util/tiktoken.js';
-import { ParsedResource } from './ref-parse-jsii.js';
+import { ParsedResource } from './parse-jsii.js';
 import {
   getUpstashConfig,
   loadJsonSync,
@@ -23,7 +23,7 @@ import {
   ResourceChunk,
   ResourceEmbedding,
   ResourceMetadata,
-} from './util.js';
+} from '../util/rag.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -99,6 +99,8 @@ const embeddedResources: ResourceEmbedding[] = [];
 console.log(`Starting embedding process for ${allResources.length} resources...`);
 console.log(`Batch size: ${batchSize}, Delay between batches: ${delayBetweenBatches / 1000}s`);
 
+// TODO: use async-sema RateLimnit imstead
+// ref: https://chatgpt.com/share/67f55889-42d0-800f-9a8a-369fbfbb5cdd
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Configure index specific Vector Store

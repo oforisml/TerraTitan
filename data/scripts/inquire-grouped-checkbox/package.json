@@ -1,0 +1,23 @@
+{
+  "name": "inquire-grouped-checkbox",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@inquirer/testing": "^2.1.46",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@inquirer/core": "^10.1.10",
+    "@inquirer/figures": "^1.0.11",
+    "@inquirer/type": "^3.0.6",
+    "ansi-escapes": "^7.0.0",
+    "yoctocolors-cjs": "^2.1.2"
+  }
+}

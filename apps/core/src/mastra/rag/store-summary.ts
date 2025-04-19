@@ -12,7 +12,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { UpstashVector } from '@mastra/upstash';
-import { getUpstashConfig, ResourceChunk } from './util.js';
+import { getUpstashConfig, ResourceChunk } from '../util/rag.js';
 import dotenv from 'dotenv';
 
 const MAX_METADATA_SIZE_BYTES = 49000; // Slightly under Upstash's 49152 limit
@@ -59,6 +59,8 @@ function getObjectSizeInBytes(obj: any): number {
 }
 
 // Batch resources to store
+// TODO: use async-sema RateLimnit imstead
+// ref: https://chatgpt.com/share/67f55889-42d0-800f-9a8a-369fbfbb5cdd
 const batchSize = 500;
 const batchCount = Math.ceil(summaryChunks.length / batchSize);
 console.log(`Starting store process for ${summaryChunks.length} chunks...`);

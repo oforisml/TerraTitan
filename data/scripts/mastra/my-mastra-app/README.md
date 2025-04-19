@@ -1,3 +1,3 @@
 # My Mastra App
 
-Playground for Mastra Weather agent
+Playground for Mastra Guides and Examples

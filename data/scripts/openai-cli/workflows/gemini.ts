@@ -100,7 +100,7 @@ export class GeminiFlow {
   private readonly _generationConfig: GenerationConfig;
 
   constructor(props: GeminiFlowProps) {
-    this._model = props.model || GEMINI_MODEL.GEMINI_2_5_PRO_EXP_03_25;
+    this._model = props.model || GEMINI_MODEL.GEMINI_2_5_PRO_PREVIEW_03_25;
     this._generationConfig = props.generationConfig;
     this._isDryRun = props.isDryRun || false;
     this._type = props.type;

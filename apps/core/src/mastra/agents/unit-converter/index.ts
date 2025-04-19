@@ -5,7 +5,12 @@ import { ConverterAgent } from '../converter/index.js';
 import { Sample, type ConversionRequestProps } from '../../util/index.js';
 import { generateInstructions, generateSampleInput, generateSampleResponse, generateNewPrompt } from './prompts.js';
 
-const GEMINI_2_5_PRO = 'gemini-2.5-pro-exp-03-25';
+/**
+ * (< 200k tokens)
+ * Input $1.25 per 1M Tokens
+ * Output $10.00 per 1M Tokens
+ */
+const GEMINI_2_5_PRO = 'gemini-2.5-pro-preview-03-25';
 
 /**
  * Class to convert unit test code from AWS CDK to TerraConstructs
