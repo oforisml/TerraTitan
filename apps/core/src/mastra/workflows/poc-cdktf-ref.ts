@@ -39,7 +39,7 @@ const reviewCdktfReferencesStep = new Step({
   inputSchema: ragReviewDecisionSchema,
   outputSchema: ragResultSchema,
   execute: async ({ context, suspend }) => {
-    const ragResults = context.getStepResult<RAGResultType>('retrieveCdktfReferences');
+    const ragResults = context.getStepResult(retrieveCdktfReferencesStep);
     return await reviewCdktfReferences(
       ragResults,
       suspend,
