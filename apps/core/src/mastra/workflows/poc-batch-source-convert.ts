@@ -1,12 +1,9 @@
-import path from 'node:path';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { Step, Workflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { batchRetrieveCdktfRefsOutputSchema } from './steps/batch-cdktf-ref-rag.js';
+import { batchConvertSourceCodeRequests } from './steps/batch-source-convert.js';
 import { sourceConverter } from '../agents/source-converter/index.js';
-import { gitRoot } from '../util/helpers.js';
-
-const tsAwsDocs = path.join(gitRoot, 'data', 'reference', 'docs', 'typescript', 'provider-aws');
 
 export const sourceConversionSchema = z.object({
   inputFile: z.string(),
@@ -25,47 +22,32 @@ export const triggerSchema = z.object({
   cacheFile: z.string(),
 });
 export type TriggerDataType = z.infer<typeof triggerSchema>;
+
+export const batchConvertSourceCodeResultSchema = z.array(
+  z.object({
+    /**
+     * The converted TerraConstructs source code
+     */
+    code: z.string(),
+  }),
+);
+
 /**
- * A step to convert source code from AWS CDK to TerraConstructs
+ * A step to convert a Batch of source code from AWS CDK to TerraConstructs
  */
 export const batchConvertSourceCode = new Step({
   id: 'convert-source-code',
   inputSchema: batchRetrieveCdktfRefsOutputSchema,
-  outputSchema: z.array(
-    z.object({
-      code: z.string(),
-    }),
-  ),
+  outputSchema: batchConvertSourceCodeResultSchema,
   execute: async ({ context }) => {
+    // TODO: get results from previous step instead of cache file
     const { cacheFile } = triggerSchema.parse(context.triggerData);
-    // TODO: should read step result from the previous step
     const cacheString = readFileSync(cacheFile, 'utf-8');
     const batchRetrieveCdktfRefs = batchRetrieveCdktfRefsOutputSchema.parse(JSON.parse(cacheString));
-    const batchConvertResults: any = [];
-    for (const inputFile of batchRetrieveCdktfRefs) {
-      // get markdown file from ragResults>ragResult>rerankedResults>metadata>url
-      const markdownFiles: string[] = [];
-      for (const ragResult of inputFile.ragResults) {
-        for (const rerankedResult of ragResult.rerankedResults) {
-          const metadata = rerankedResult.metadata;
-          if (metadata && metadata.url) {
-            const parsedUrl = new URL(metadata.url);
-            // Remove the leading slash from pathname
-            const docPath = parsedUrl.pathname.startsWith('/') ? parsedUrl.pathname.substring(1) : parsedUrl.pathname;
 
-            // Split the path and pop the last part (e.g., "ami")
-            const resourceName = docPath.split('/').pop();
-            const docFilePath = path.join(tsAwsDocs, 'r', `${resourceName}.html.markdown`);
-            markdownFiles.push(docFilePath);
-          }
-        }
-      }
-      const conversionRequest = {
-        inputFile: inputFile.inputFile,
-        inputRefFiles: inputFile.inputRefs.map(inputRef => inputRef.sourceFile),
-        outputRefFiles: markdownFiles,
-      };
-      // console.log('Found Source Conversion request: ' + JSON.stringify(conversionRequest, null, 2));
+    // TODO: Add rate limiters for calling sourceConverter Agent
+    const batchConvertResults: z.infer<typeof batchConvertSourceCodeResultSchema> = [];
+    for (const conversionRequest of await batchConvertSourceCodeRequests(batchRetrieveCdktfRefs)) {
       const result = await sourceConverter.convert(conversionRequest);
       batchConvertResults.push(result);
     }
@@ -74,7 +56,8 @@ export const batchConvertSourceCode = new Step({
 });
 
 /**
- * The workflow to convert AWS-CDK module to CDKTF
+ * The workflow to convert a batch of source code from AWS CDK to TerraConstructs
+ * using the sourceConverter Agent
  */
 export const batchConversionWorkflow = new Workflow({
   name: 'batch-conversion-workflow',
