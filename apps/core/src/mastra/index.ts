@@ -9,6 +9,7 @@ import { parentWorkflow } from './workflows/poc-dynamic.js';
 import { cdktfRefWorkflow } from './workflows/poc-cdktf-ref.js';
 import { upstreamWorkflow } from './workflows/poc-ensure-upstream.js';
 import { vNextWorkflow } from './workflows/vnext.js';
+import { batchConversionWorkflow } from './workflows/poc-batch-source-convert.js';
 // import { sourceConverter } from './agents/source-converter/index.js';
 
 export const mastra: Mastra = new Mastra({
@@ -28,6 +29,7 @@ export const mastra: Mastra = new Mastra({
     parentWorkflow,
     cdktfRefWorkflow,
     upstreamWorkflow,
+    batchConversionWorkflow,
   },
   vnext_workflows: {
     vNextWorkflow,

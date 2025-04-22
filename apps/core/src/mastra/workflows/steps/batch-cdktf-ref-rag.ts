@@ -128,13 +128,15 @@ export function prepareBatchReview(
     );
     group.choices.push(...choices);
   }
+  // filter out any groups that have empty choice array
+  const filteredGroups = Array.from(groupedChoicesMap.values()).filter(group => group.choices.length > 0);
 
   // 4. Single, global review message
   const message = `Some CDKTF mappings scored below ${threshold}. Please review *all* suggestions (select 2–5 per group).`;
 
   return {
     updatedBatch: batch,
-    reviewPayload: { message, groupedChoices: Array.from(groupedChoicesMap.values()) },
+    reviewPayload: { message, groupedChoices: filteredGroups },
   };
 }
 

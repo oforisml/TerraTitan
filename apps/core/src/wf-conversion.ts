@@ -1,3 +1,4 @@
+import fs from 'fs';
 import groupCheckbox from 'inquire-grouped-checkbox';
 import { mastra } from './mastra/index.js';
 import { reviewPayloadSchema as cdktfRefReviewPayloadSchema } from './mastra/workflows/steps/batch-cdktf-ref-rag.js';
@@ -50,8 +51,13 @@ export async function runConversionWorkflow(args?: CommandLineArgs) {
         console.log('===================================\n');
 
         if (resumeResult?.results[cdktfReviewStepId]?.output) {
-          console.log('Final References:');
-          console.log(JSON.stringify(resumeResult?.results[cdktfReviewStepId]?.output, null, 2));
+          // write to disk
+          const filePath = `cache-${moduleName}.json`;
+          fs.writeFileSync(
+            `cache-${moduleName}.json`,
+            JSON.stringify(resumeResult?.results[cdktfReviewStepId]?.output, null, 2),
+          );
+          console.log(`File written to ${filePath}`);
         }
       }
     }
