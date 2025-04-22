@@ -125,7 +125,8 @@ export const findUpstreamInputRefsWorkflow = createWorkflow({
   id: 'find-upstream-input-refs',
   inputSchema: initSchema,
   outputSchema: findInputRefsOutputSchema,
-  steps: [ensureUpstreamStep, findLibInputRefsStep, findLibCdktfRefsStep, reviewCdktfRefsStep],
+  // TODO: Fix issue with reviewCdktfRefsStep ...
+  steps: [ensureUpstreamStep, findLibInputRefsStep, findLibCdktfRefsStep], //, reviewCdktfRefsStep],
 });
 findUpstreamInputRefsWorkflow
   .then(ensureUpstreamStep)
