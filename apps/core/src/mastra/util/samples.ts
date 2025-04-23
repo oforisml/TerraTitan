@@ -39,8 +39,6 @@ const EXAMPLES: Record<string, ConversionExample> = {
 
     // Example CDKTF Unit Test conversion result
     outputFile: path.join(samplesDir, 'aws-events', 'event-bus', 'output', 'test', 'event-bus.test.ts'),
-    // created by running bun scripts/merge-docs/index.ts
-    // CDKTF Declaration merged with terraform-provider-aws Markdown docs
     outputRefFiles: [
       // Unit Tests use Terraform HCL Markdown docs as attributes reference
       path.join(markdownAwsDocs, 'cloudwatch_event_bus.html.markdown'),
