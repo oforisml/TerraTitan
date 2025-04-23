@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { Step, Workflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { batchRetrieveCdktfRefsOutputSchema } from './steps/batch-cdktf-ref-rag.js';
@@ -47,8 +47,10 @@ export const batchConvertSourceCode = new Step({
 
     // TODO: Add rate limiters for calling sourceConverter Agent
     const batchConvertResults: z.infer<typeof batchConvertSourceCodeResultSchema> = [];
+    let index = 0;
     for (const conversionRequest of await batchConvertSourceCodeRequests(batchRetrieveCdktfRefs)) {
       const result = await sourceConverter.convert(conversionRequest);
+      writeFileSync(`result-${index++}`, result.code, 'utf-8');
       batchConvertResults.push(result);
     }
     return batchConvertResults;

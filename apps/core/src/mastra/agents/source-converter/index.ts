@@ -57,23 +57,19 @@ class SourceConverterAgent extends ConverterAgent {
       role: 'user',
       content: generateNewPrompt(requestProps),
     });
-    messages.forEach((message, index) => {
-      fs.writeFileSync(
-        `prompts-${path.basename(requestProps.inputFile)}-${index}-${message.role}.md`,
-        message.content as string,
-      );
-    });
-    // const result = await this.agent.generate(messages, {
-    //   output: z.object({
-    //     code: z.string(),
-    //   }),
-    //   temperature: 0,
+    // messages.forEach((message, index) => {
+    //   fs.writeFileSync(
+    //     `prompts-${path.basename(requestProps.inputFile)}-${index}-${message.role}.md`,
+    //     message.content as string,
+    //   );
     // });
-    return {
-      code: 'TODO: Implement the conversion logic',
-    };
-
-    // return result.object;
+    const result = await this.agent.generate(messages, {
+      output: z.object({
+        code: z.string(),
+      }),
+      temperature: 0,
+    });
+    return result.object;
   }
 }
 
