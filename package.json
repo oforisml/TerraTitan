@@ -5,6 +5,7 @@
     "test": "turbo run test",
     "view-report": "turbo run view-report",
     "build": "turbo run build",
+    "check-types": "turbo run check-types",
     "repo-lint": "sherif"
   },
   "devDependencies": {

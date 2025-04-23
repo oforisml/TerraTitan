@@ -1,11 +1,11 @@
 import * as path from 'path';
 import { ragResultSchema, retrieveCdktfReferences } from './retrieve-cdktf-ref.js';
-import { findInputRefsOutputSchema, inputSchema } from './find-input-refs.js';
+import { findSrcInputRefsOutputSchema, srcInputSchema } from './find-input-refs.js';
 import { gitRoot } from '../../util/helpers.js';
 import { z } from 'zod';
 
 export const batchRetrieveCdktfRefsOutputSchema = z.array(
-  inputSchema.extend({
+  srcInputSchema.extend({
     ragResults: z.array(ragResultSchema),
   }),
 );
@@ -17,7 +17,7 @@ export const batchRetrieveCdktfRefsOutputSchema = z.array(
  * @returns The CDKTF references for the input files
  */
 export async function batchRetrieveCdktfRefs(
-  input: z.infer<typeof findInputRefsOutputSchema>,
+  input: z.infer<typeof findSrcInputRefsOutputSchema>,
   // outputModule: string,
 ): Promise<z.infer<typeof batchRetrieveCdktfRefsOutputSchema>> {
   // TODO: Add rate limiters?
@@ -128,13 +128,15 @@ export function prepareBatchReview(
     );
     group.choices.push(...choices);
   }
+  // filter out any groups that have empty choice array
+  const filteredGroups = Array.from(groupedChoicesMap.values()).filter(group => group.choices.length > 0);
 
   // 4. Single, global review message
   const message = `Some CDKTF mappings scored below ${threshold}. Please review *all* suggestions (select 2–5 per group).`;
 
   return {
     updatedBatch: batch,
-    reviewPayload: { message, groupedChoices: Array.from(groupedChoicesMap.values()) },
+    reviewPayload: { message, groupedChoices: filteredGroups },
   };
 }
 

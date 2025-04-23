@@ -2203,7 +2203,7 @@ export {};
 Ensure generated configurations are tested to follow the following documentation
 
 ------------------------
-// r
+// ../../data/reference/docs/provider-aws/r/cloudwatch_event_bus.html.markdown
 ---
 subcategory: "EventBridge"
 layout: "aws"
@@ -2279,7 +2279,7 @@ Using \`terraform import\`, import EventBridge event buses using the name of the
 \`\`\`
 
 
-// r
+// ../../data/reference/docs/provider-aws/r/cloudwatch_event_bus_policy.html.markdown
 ---
 subcategory: "EventBridge"
 layout: "aws"
@@ -2448,7 +2448,7 @@ Using \`terraform import\`, import an EventBridge policy using the \`event_bus_n
 \`\`\`
 
 
-// r
+// ../../data/reference/docs/provider-aws/r/cloudwatch_event_permission.html.markdown
 ---
 subcategory: "EventBridge"
 layout: "aws"

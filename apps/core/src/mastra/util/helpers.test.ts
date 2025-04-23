@@ -7,6 +7,8 @@ import {
   filterInputRefFile,
   kebabToTitleCase,
   getClassJsDocs,
+  findAwsCdkDeclarations,
+  gitRoot,
 } from './helpers.js';
 
 describe('kebabToTitleCase', () => {
@@ -27,6 +29,28 @@ describe('kebabToTitleCase', () => {
     const expectedOutput = 'Example';
     const result = kebabToTitleCase(input);
     expect(result).toEqual(expectedOutput);
+  });
+});
+
+describe('findAwsCdkDeclarations', () => {
+  test('should find all .d.ts files under aws-cdk-lib/<submodule>/', () => {
+    const declarationFiles = findAwsCdkDeclarations('aws-sns').map(file => path.relative(gitRoot, file));
+
+    // simplify inline snapshots, strip out the dynamic ".pnpm/aws-cdk-lib@.../node_modules/" segment
+    const normalized = declarationFiles.map(p =>
+      p.replace(/^node_modules\/\.pnpm\/aws-cdk-lib@[^/]+\/node_modules\//, 'node_modules/aws-cdk-lib/'),
+    );
+    expect(normalized).toMatchInlineSnapshot(`
+      [
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/delivery-policy.d.ts",
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/policy.d.ts",
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/subscriber.d.ts",
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/subscription-filter.d.ts",
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/subscription.d.ts",
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/topic-base.d.ts",
+        "node_modules/aws-cdk-lib/aws-cdk-lib/aws-sns/lib/topic.d.ts",
+      ]
+    `);
   });
 });
 

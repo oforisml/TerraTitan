@@ -5,7 +5,7 @@ import { ensureUpstreamOutputSchema, ensureUpstreamInputSchema, ensureUpstream }
 // import { unitConverter } from '../agents/unit-converter/index.js';
 import { workspaceInputSchema, ensureWorkspace, workspaceOutputSchema } from './steps/ensure-workspace.js';
 // import { ragReviewDecisionSchema, reviewCdktfReferences, RAGReviewType } from './steps/review-cdktf-ref.js';
-import { InputRefType, findInputRefs, findInputRefsOutputSchema } from './steps/find-input-refs.js';
+import { findSrcInputRefs, findSrcInputRefsOutputSchema } from './steps/find-input-refs.js';
 import {
   batchRetrieveCdktfRefs,
   batchRetrieveCdktfRefsOutputSchema,
@@ -47,21 +47,21 @@ const findLibInputRefsStep = new Step({
   id: 'find-lib-input-refs',
   description: 'Discovers Source Code input references for the conversion',
   inputSchema: ensureUpstreamOutputSchema,
-  outputSchema: findInputRefsOutputSchema,
+  outputSchema: findSrcInputRefsOutputSchema,
   execute: async ({ context }) => {
     const upstreamDetails = context.getStepResult(ensureUpstreamStep);
-    return await findInputRefs(upstreamDetails, InputRefType.LIB);
+    return await findSrcInputRefs(upstreamDetails);
   },
 });
 
 const findLibCdktfRefsStep = new Step({
   id: 'find-lib-output-refs',
   description: 'CDKTF reference retrieval for the conversion',
-  inputSchema: findInputRefsOutputSchema,
+  inputSchema: findSrcInputRefsOutputSchema,
   outputSchema: batchRetrieveCdktfRefsOutputSchema,
   execute: async ({ context }) => {
-    const findCdktfRefs = context.getStepResult(findLibInputRefsStep);
-    return await batchRetrieveCdktfRefs(findCdktfRefs);
+    const srcInputRefs = context.getStepResult(findLibInputRefsStep);
+    return await batchRetrieveCdktfRefs(srcInputRefs);
   },
 });
 

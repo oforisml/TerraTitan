@@ -8,7 +8,7 @@ import { ensureUpstreamOutputSchema, ensureUpstreamInputSchema, ensureUpstream }
 // import { unitConverter } from '../agents/unit-converter/index.js';
 import { workspaceInputSchema, ensureWorkspace, workspaceOutputSchema } from './steps/ensure-workspace.js';
 // import { ragReviewDecisionSchema, reviewCdktfReferences, RAGReviewType } from './steps/review-cdktf-ref.js';
-import { InputRefType, findInputRefs, findInputRefsOutputSchema } from './steps/find-input-refs.js';
+import { findSrcInputRefs, findSrcInputRefsOutputSchema } from './steps/find-input-refs.js';
 import {
   batchRetrieveCdktfRefs,
   batchRetrieveCdktfRefsOutputSchema,
@@ -58,20 +58,20 @@ const findLibInputRefsStep = createStep({
   id: 'find-lib-input-refs',
   description: 'Finds the Source Code input references for the conversion',
   inputSchema: ensureUpstreamOutputSchema,
-  outputSchema: findInputRefsOutputSchema,
+  outputSchema: findSrcInputRefsOutputSchema,
   execute: async ({ inputData }) => {
     const upstreamDetails = ensureUpstreamOutputSchema.parse(inputData);
-    return await findInputRefs(upstreamDetails, InputRefType.LIB);
+    return await findSrcInputRefs(upstreamDetails);
   },
 });
 
 const findLibCdktfRefsStep = createStep({
   id: 'find-lib-output-refs',
   description: 'Finds the Source Code CDKTF references for the conversion',
-  inputSchema: findInputRefsOutputSchema,
+  inputSchema: findSrcInputRefsOutputSchema,
   outputSchema: batchRetrieveCdktfRefsOutputSchema,
   execute: async ({ inputData }) => {
-    const findCdktfRefs = findInputRefsOutputSchema.parse(inputData);
+    const findCdktfRefs = findSrcInputRefsOutputSchema.parse(inputData);
     return await batchRetrieveCdktfRefs(findCdktfRefs);
   },
 });
@@ -124,8 +124,9 @@ export const reviewCdktfRefsStep = createStep({
 export const findUpstreamInputRefsWorkflow = createWorkflow({
   id: 'find-upstream-input-refs',
   inputSchema: initSchema,
-  outputSchema: findInputRefsOutputSchema,
-  steps: [ensureUpstreamStep, findLibInputRefsStep, findLibCdktfRefsStep, reviewCdktfRefsStep],
+  outputSchema: findSrcInputRefsOutputSchema,
+  // TODO: Fix issue with reviewCdktfRefsStep ...
+  steps: [ensureUpstreamStep, findLibInputRefsStep, findLibCdktfRefsStep], //, reviewCdktfRefsStep],
 });
 findUpstreamInputRefsWorkflow
   .then(ensureUpstreamStep)

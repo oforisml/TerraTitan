@@ -90,7 +90,7 @@ export function generateSampleResponse(sample: Sample): string {
 }
 
 export function generateNewPrompt(props: ConversionRequestProps): string {
-  const request = new ConversionRequest(ConversionType.SOURCE, props);
+  const request = new ConversionRequest(ConversionType.UNIT, props);
   return `Convert the following AWS CDK Construct Unit Tests to TerraConstructs Unit Tests.
 \`\`\`typescript
 ${request.input}

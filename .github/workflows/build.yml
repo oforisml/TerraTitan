@@ -31,5 +31,6 @@ jobs:
       - name: Run Test and build
         run: |
           pnpm run test
+          pnpm run check-types
           # temp disable build
           # pnpm run build

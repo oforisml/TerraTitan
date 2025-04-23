@@ -54,11 +54,18 @@ export class ConversionRequest {
       return this._outputRefs;
     }
     this._outputRefs = this.props.outputRefFiles
-      .map(
-        f =>
-          `// ${this.type === ConversionType.SOURCE ? cdktfBaseName(f) : path.basename(f)}\n` +
-          fs.readFileSync(f, 'utf8').replace(/^#/gm, '###'),
-      )
+      .map(f => {
+        switch (this.type) {
+          case ConversionType.SOURCE:
+            // source files use TypeScript declaration files as output refs
+            return `// ${cdktfBaseName(f)}\n` + fs.readFileSync(f, 'utf8');
+          case ConversionType.UNIT:
+            // unit test files use Markdown docs as output refs
+            return `// ${path.relative(process.cwd(), f)}\n` + fs.readFileSync(f, 'utf8').replace(/^#/gm, '###');
+          default:
+            throw new Error(`Unknown conversion type: ${this.type}`);
+        }
+      })
       .join('\n\n');
     return this._outputRefs;
   }

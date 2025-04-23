@@ -1,3 +1,5 @@
+// https://github.com/cdklabs/decdk/tree/v2.0.0-pre.602/src/type-system
+
 import * as reflect from 'jsii-reflect';
 
 export function allImplementationsOfType(type: reflect.Type) {

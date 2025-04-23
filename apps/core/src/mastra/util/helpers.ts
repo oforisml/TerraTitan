@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
+import { existsSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 import { Project } from 'ts-morph';
@@ -255,4 +256,35 @@ export function getClassJsDocs(sourceFilePath: string, className: string): strin
     .getJsDocs()
     .map(jsDoc => jsDoc.getInnerText())
     .join('\n');
+}
+
+/**
+ * Find all .d.ts files under `aws-cdk-lib/<submodule>/`
+ *
+ * @param submodule - e.g. 'aws-sns'
+ * @returns absolute paths to every declaration file
+ */
+export function findAwsCdkDeclarations(submodule: string): string[] {
+  // in ESM land, get a require()
+  const require = createRequire(import.meta.url);
+
+  // 1) Resolve the aws-cdk-lib package.json (always allowed by exports)
+  const pkgJsonPath = require.resolve('aws-cdk-lib/package.json');
+  const pkgRoot = path.dirname(pkgJsonPath);
+
+  // 2) Build the path to the submodule folder
+  const subDir = path.join(pkgRoot, submodule);
+  if (!existsSync(subDir) || !statSync(subDir).isDirectory()) {
+    throw new Error(`Could not find aws-cdk-lib/${submodule} at ${subDir}`);
+  }
+
+  // TS file‑system helper .d.ts recursive discovery
+  const declarationFiles = ts.sys.readDirectory(
+    subDir,
+    /* extensions */ ['.d.ts'],
+    /* excludes    */ ['**/index.d.ts', '**/*.generated.d.ts'],
+    /* includes    */ undefined,
+  );
+
+  return declarationFiles;
 }

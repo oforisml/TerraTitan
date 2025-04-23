@@ -3,12 +3,62 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
 import { ensureUpstreamOutputSchema } from './ensure-upstream.js';
-import { findGeneratedImports } from '../../util/helpers.js';
+import { findGeneratedImports, findAwsCdkDeclarations } from '../../util/helpers.js';
 
 /**
- * A single Conversion request
+ * A single Unit Test Code Conversion input
  */
-export const inputSchema = z.object({
+export const testInputSchema = z.object({
+  /**
+   * The input file to convert
+   */
+  inputFile: z.string(),
+  /**
+   * The input references (i.e. declaration files of the library under test)
+   */
+  inputRefs: z.array(z.string()),
+});
+
+/**
+ * The output schema for the findInputRefs step
+ *
+ * These are the input files and their input references
+ */
+export const findTestInputRefsOutputSchema = z.object({
+  /**
+   * Information about the input files for conversion
+   * This includes the input file and its input references
+   */
+  inputFiles: z.array(testInputSchema),
+});
+
+/**
+ * Find all the input files and their references in upstream lib
+ *
+ * For test files:
+ * - the source File(s) declarations under test
+ *
+ * @param upstreamDetails The upstream details
+ * @returns The input files and their input references
+ */
+export async function findTestInputRefs(
+  upstreamDetails: z.infer<typeof ensureUpstreamOutputSchema>,
+): Promise<z.infer<typeof findTestInputRefsOutputSchema>> {
+  const testDir = path.join(upstreamDetails.upstreamDir, 'test');
+  const testFiles = await getAllFiles(testDir);
+  return {
+    inputFiles: testFiles.map(testFile => ({
+      inputFile: testFile,
+      // TODO: Filter on what's actually used 'testFile'?
+      inputRefs: findAwsCdkDeclarations(upstreamDetails.moduleName),
+    })),
+  };
+}
+
+/**
+ * A single Source Code Conversion input
+ */
+export const srcInputSchema = z.object({
   /**
    * The input file to convert
    */
@@ -30,37 +80,19 @@ export const inputSchema = z.object({
       sourceClass: z.string(),
     }),
   ),
-  // outputRefFiles: z.array(z.string()),
-  // outputRefs: z.array(
-  //   z.object({
-  //     sourceFile: z.string(),
-  //     sourceClass: z.string(),
-  //   }),
-  // ),
 });
-
-export enum InputRefType {
-  /**
-   * The input file is a source file
-   */
-  LIB = 'lib',
-  /**
-   * The input file is a test file
-   */
-  TEST = 'test',
-}
 
 /**
  * The output schema for the findInputRefs step
  *
  * These are the input files and their input references
  */
-export const findInputRefsOutputSchema = z.object({
+export const findSrcInputRefsOutputSchema = z.object({
   /**
    * Information about the input files for conversion
    * This includes the input file, the input references
    */
-  inputFiles: z.array(inputSchema),
+  inputFiles: z.array(srcInputSchema),
   /**
    * The raw files that were found
    */
@@ -70,29 +102,23 @@ export const findInputRefsOutputSchema = z.object({
 /**
  * Find all the input files and their references in the upstream directory
  *
- * For source code files, this will be the:
+ * For source code files:
  * - Cfn L1 Resource Class
  * - Cfn L1 Resource Class Source File
  *
- * For test files, this will be the:
- * - the source File(s) under test
- *
  * @param upstreamDetails The upstream details
- * @param type (default LIB) The type of input references to find
  * @returns The input files and their input references
  */
-export async function findInputRefs(
+export async function findSrcInputRefs(
   upstreamDetails: z.infer<typeof ensureUpstreamOutputSchema>,
-  type: InputRefType = InputRefType.LIB,
-): Promise<z.infer<typeof findInputRefsOutputSchema>> {
+): Promise<z.infer<typeof findSrcInputRefsOutputSchema>> {
   const require = createRequire(import.meta.url);
+  const srcDir = path.join(upstreamDetails.upstreamDir, 'src');
 
-  // TODO: Handle Unit Test and Source Code files differently
-  const srcDir = path.join(upstreamDetails.upstreamDir, type);
-  const inputFiles: z.infer<typeof inputSchema>[] = [];
+  const inputFiles: z.infer<typeof srcInputSchema>[] = [];
   const rawFiles: string[] = [];
   for (const file of await getAllFiles(srcDir)) {
-    if (file.endsWith('.ts')) {
+    if (file.endsWith('.ts') && file !== 'index.ts') {
       const generatedImports = findGeneratedImports(await fs.readFile(file, 'utf-8'));
       if (Object.keys(generatedImports).length === 0) {
         rawFiles.push(file);
@@ -138,6 +164,7 @@ export async function findInputRefs(
 
 // Helper function to recursively walk directory
 async function getAllFiles(dir: string): Promise<string[]> {
+  // TODO: Consider using tts.sys.readDirectory instead?
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files = await Promise.all(
     entries.map(async entry => {
