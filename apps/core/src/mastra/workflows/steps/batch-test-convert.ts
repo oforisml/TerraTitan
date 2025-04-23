@@ -7,7 +7,7 @@ import { gitRoot } from '../../util/helpers.js';
 const markdownHclAwsDocs = path.join(gitRoot, 'data', 'reference', 'docs', 'provider-aws', 'r');
 
 // TODO: Use zod schemas in mastra/agents/unit-converter/index.ts
-const unitTestsConversionSchema = z.object({
+export const unitTestsConversionSchema = z.object({
   inputFile: z.string(),
   inputRefFiles: z.array(z.string()),
   outputRefFiles: z.array(z.string()),
