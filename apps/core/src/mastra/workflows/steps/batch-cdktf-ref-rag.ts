@@ -1,11 +1,11 @@
 import * as path from 'path';
 import { ragResultSchema, retrieveCdktfReferences } from './retrieve-cdktf-ref.js';
-import { findInputRefsOutputSchema, inputSchema } from './find-input-refs.js';
+import { findSrcInputRefsOutputSchema, srcInputSchema } from './find-input-refs.js';
 import { gitRoot } from '../../util/helpers.js';
 import { z } from 'zod';
 
 export const batchRetrieveCdktfRefsOutputSchema = z.array(
-  inputSchema.extend({
+  srcInputSchema.extend({
     ragResults: z.array(ragResultSchema),
   }),
 );
@@ -17,7 +17,7 @@ export const batchRetrieveCdktfRefsOutputSchema = z.array(
  * @returns The CDKTF references for the input files
  */
 export async function batchRetrieveCdktfRefs(
-  input: z.infer<typeof findInputRefsOutputSchema>,
+  input: z.infer<typeof findSrcInputRefsOutputSchema>,
   // outputModule: string,
 ): Promise<z.infer<typeof batchRetrieveCdktfRefsOutputSchema>> {
   // TODO: Add rate limiters?

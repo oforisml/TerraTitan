@@ -19,6 +19,22 @@ const sourceConversionSchema = z.object({
 
 export const batchConvertSourceCodeOutputRequestsSchema = z.array(sourceConversionSchema);
 
+// Example:
+// sourceCodeConversions: [
+//   {
+//     inputFile: path.join(upstreamDir, moduleName, 'src', 'topic.ts'),
+//     inputRefFiles: [path.join(awsCdkPkgDir, moduleName, 'lib', 'sns.generated.d.ts')],
+//     // Result of CDKTF Ref retrieval
+//     outputRefFiles: [
+//       path.join(mergedAwsDocs, 'sns-topic', 'index.d.ts'),
+//       path.join(mergedAwsDocs, 'sns-topic-data-protection-policy', 'index.d.ts'),
+//       path.join(mergedAwsDocs, 'sns-topic-policy', 'index.d.ts'),
+//       path.join(mergedAwsDocs, 'sns-topic-subscription', 'index.d.ts'),
+//     ],
+//     // outputPath: path.join('src', 'aws', 'notify', 'topic.ts'),
+//   },
+// ],
+
 /**
  * A function to prepare the source conversion requests from the batchRetrieveCdktfRefs step
  *

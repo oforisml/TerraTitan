@@ -15,7 +15,7 @@ import {
 import { ragReviewDecisionSchema, reviewCdktfReferences, RAGReviewType } from './steps/review-cdktf-ref.js';
 import { ensureUpstreamOutputSchema } from './steps/ensure-upstream.js';
 import { isMastra, writeCodeFromStep, conversionOutputSchema } from './util.js';
-import { findInputRefs, InputRefType } from './steps/find-input-refs.js';
+import { findSrcInputRefs } from './steps/find-input-refs.js';
 
 /**
  * A single Conversion request
@@ -94,8 +94,8 @@ const createDynamicWorkflow = new Step({
 
     const upstreamDetails = ensureUpstreamOutputSchema.parse(context.triggerData.upstreamModule);
     const outputModule = context.triggerData.outputModule;
-    const { inputFiles: sourceCodeConversions } = await findInputRefs(upstreamDetails, InputRefType.LIB);
-    // const { inputFiles: unitTestConversions } = await findInputRefs(upstreamDetails, InputRefType.TEST);
+    const { inputFiles: sourceCodeConversions } = await findSrcInputRefs(upstreamDetails);
+    // const { inputFiles: unitTestConversions } = await findTestInputRefs(upstreamDetails);
 
     const dynamicTriggerSchema = z.object({
       upstreamModule: ensureUpstreamOutputSchema,
@@ -216,9 +216,9 @@ const createDynamicWorkflow = new Step({
     //       path.join(awsCdkSrcDir, 'aws-sns', 'topic', 'input', 'declarations', 'policy.d.ts'),
     //     ],
     //     outputRefFiles: [
-    //       path.join(tsAwsDocs, 'sns_topic.html.markdown'),
-    //       path.join(tsAwsDocs, 'sns_topic_policy.html.markdown'),
-    //       path.join(tsAwsDocs, 'sns_topic_data_protection_policy.html.markdown'),
+    //       path.join(markdownAwsDocs, 'sns_topic.html.markdown'),
+    //       path.join(markdownAwsDocs, 'sns_topic_policy.html.markdown'),
+    //       path.join(markdownAwsDocs, 'sns_topic_data_protection_policy.html.markdown'),
     //     ],
     //     outputPath: path.join('test', 'aws', 'notify', 'sns.test.ts'),
     //   },

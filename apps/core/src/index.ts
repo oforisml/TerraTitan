@@ -6,6 +6,7 @@ import { runConversionWorkflow } from './wf-conversion.js';
 import { runCdktfRefWf } from './wf-cdktf-ref.js';
 import { runEnsureUpstreamWf } from './wf-ensure-upstream.js';
 import { runBatchSourceConvertWf } from './wf-batch-source-convert.js';
+import { runBatchTestConvertWf } from './wf-batch-test-convert.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -19,6 +20,10 @@ const workflowTypeSchema = z.enum([
    * Demo Batch Source Code conversion workflow
    */
   'batchConvert',
+  /**
+   * Demo Batch Unit Tests conversion workflow
+   */
+  'batchTestConvert',
   /**
    * Demo CDKTF Reference retrieval workflow
    */
@@ -55,6 +60,7 @@ async function main() {
         choices: [
           { value: 'convert', name: 'Conversion Workflow' },
           { value: 'batchConvert', name: 'Demo Batch Source Code Conversion Workflow' },
+          { value: 'batchTestConvert', name: 'Demo Batch Unit Tests Conversion Workflow' },
           { value: 'cdktfRef', name: 'Demo aws-elasticloadbalancingv2.CfnTargetGroup CDKTF Reference retrieval' },
           { value: 'ensureUpstream', name: 'Demo ensure upstream for AWS CDK Module' },
           // { value: 'convert-dynamic', name: 'Conversion Wf (dynamic)' },
@@ -68,6 +74,9 @@ async function main() {
         break;
       case 'batchConvert':
         await runBatchSourceConvertWf();
+        break;
+      case 'batchTestConvert':
+        await runBatchTestConvertWf();
         break;
       case 'cdktfRef':
         await runCdktfRefWf();

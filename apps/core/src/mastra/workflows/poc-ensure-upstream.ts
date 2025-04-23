@@ -2,7 +2,7 @@
 import { Step, Workflow } from '@mastra/core/workflows';
 // import { z } from 'zod';
 import { ensureUpstreamInputSchema, ensureUpstreamOutputSchema, ensureUpstream } from './steps/ensure-upstream.js';
-import { findInputRefs, findInputRefsOutputSchema } from './steps/find-input-refs.js';
+import { findSrcInputRefs, findSrcInputRefsOutputSchema } from './steps/find-input-refs.js';
 
 // Build the workflow
 export const upstreamWorkflow = new Workflow({
@@ -25,10 +25,10 @@ const ensureUpstreamStep = new Step({
 const findInputRefsStep = new Step({
   id: 'findInputRefs',
   inputSchema: ensureUpstreamOutputSchema,
-  outputSchema: findInputRefsOutputSchema,
+  outputSchema: findSrcInputRefsOutputSchema,
   execute: async ({ context }) => {
     const upstreamDetails = ensureUpstreamOutputSchema.parse(context.getStepResult('ensureUpstream'));
-    return await findInputRefs(upstreamDetails);
+    return await findSrcInputRefs(upstreamDetails);
   },
 });
 
