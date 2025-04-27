@@ -1,6 +1,7 @@
 import { Mastra } from '@mastra/core';
-import { createLogger } from '@mastra/core/logger';
+import { createLogger, LogLevel } from '@mastra/core/logger';
 import { LibSQLStore } from '@mastra/libsql';
+import { OtelTransport } from 'mastra-otel-logger';
 
 // import workflows
 import { conversionWorkflow } from './workflows/conversion.js';
@@ -23,7 +24,13 @@ export const mastra: Mastra = new Mastra({
   }),
   logger: createLogger({
     name: 'Mastra',
-    level: 'info',
+    level: LogLevel.INFO,
+    transports: {
+      otel: new OtelTransport({
+        loggerName: 'mastra-cli',
+        loggerVersion: '0.1.0',
+      }),
+    },
   }),
   telemetry: {
     serviceName: 'terratitan-cli',
