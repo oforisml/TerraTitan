@@ -31,6 +31,7 @@ const awsCdkPkgDir = path.join(gitRoot, 'data', 'reference', 'declarations', 'aw
  */
 export async function runCdktfRefWf() {
   const wf = mastra.getWorkflow('cdktfRefWorkflow');
+  const logger = mastra.getLogger();
   const run = wf.createRun();
   const triggerData: RefTriggerType = {
     sourceFile: path.join(awsCdkPkgDir, 'aws-elasticloadbalancingv2', 'lib', 'elasticloadbalancingv2.generated.d.ts'),
@@ -93,12 +94,12 @@ export async function runCdktfRefWf() {
   }
 
   if (result.results?.reviewCdktfReferences?.status && result.results.reviewCdktfReferences.status === 'success') {
-    console.log(
+    logger.info(
       'Workflow completed without requiring human intervention:',
       result.results?.reviewCdktfReferences?.output.rerankedResults,
     );
   } else {
-    console.log('Workflow completed without requiring human intervention:', result.results);
+    logger.info('Workflow completed without requiring human intervention:', result.results);
   }
   return result;
 }

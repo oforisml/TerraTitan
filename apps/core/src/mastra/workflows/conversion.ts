@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import { Workflow, Step } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { ensureUpstreamOutputSchema, ensureUpstreamInputSchema, ensureUpstream } from './steps/ensure-upstream.js';
@@ -42,7 +42,7 @@ export const triggerSchema = z.object({
 export type TriggerDataType = z.infer<typeof triggerSchema>;
 
 const ensureUpstreamStep = new Step({
-  id: 'ensureUpstreamStep',
+  id: 'ensure-upstream',
   description: 'Ensures an upstream module is available for conversion',
   outputSchema: ensureUpstreamOutputSchema,
   execute: async ({ context }) => {
@@ -52,7 +52,7 @@ const ensureUpstreamStep = new Step({
 });
 
 const ensureWorkspaceStep = new Step({
-  id: 'ensureWorkspace',
+  id: 'ensure-workspace',
   inputSchema: workspaceInputSchema,
   outputSchema: workspaceOutputSchema,
   execute: async ({ context }) => {
@@ -75,7 +75,7 @@ const findLibInputRefsStep = new Step({
 
 const findTestInputRefsStep = new Step({
   id: 'find-test-input-refs',
-  description: 'Discovers Source Code input references for the conversion',
+  description: 'Discovers Unit Test input references for the conversion',
   inputSchema: ensureUpstreamOutputSchema,
   outputSchema: findTestInputRefsOutputSchema,
   execute: async ({ context }) => {

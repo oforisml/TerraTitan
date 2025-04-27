@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import groupCheckbox from 'inquire-grouped-checkbox';
 import { mastra } from './mastra/index.js';
 import { reviewPayloadSchema as cdktfRefReviewPayloadSchema } from './mastra/workflows/steps/batch-cdktf-ref-rag.js';
@@ -11,6 +11,7 @@ import { CommandLineArgs, getConversionInputs } from './cli-util.js';
  */
 export async function runConversionWorkflow(args?: CommandLineArgs) {
   const { moduleName, workspaceId, outputModule } = await getConversionInputs(args);
+  const logger = mastra.getLogger();
   // init the workflow
   const triggerData: TriggerDataType = {
     upstreamModule: {
@@ -57,7 +58,7 @@ export async function runConversionWorkflow(args?: CommandLineArgs) {
             `cache-${moduleName}.json`,
             JSON.stringify(resumeResult?.results[cdktfReviewStepId]?.output, null, 2),
           );
-          console.log(`File written to ${filePath}`);
+          logger.info(`File written to ${filePath}`);
         }
       }
     }

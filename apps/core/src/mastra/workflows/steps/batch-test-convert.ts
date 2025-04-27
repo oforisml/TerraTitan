@@ -4,7 +4,7 @@ import { batchRetrieveCdktfRefsOutputSchema } from './batch-cdktf-ref-rag.js';
 import { findTestInputRefsOutputSchema } from './find-input-refs.js';
 import { gitRoot } from '../../util/helpers.js';
 
-const markdownHclAwsDocs = path.join(gitRoot, 'data', 'reference', 'docs', 'provider-aws', 'r');
+const markdownHclAwsDocs = path.join(gitRoot, 'data', 'reference', 'docs', 'provider-aws');
 
 // TODO: Use zod schemas in mastra/agents/unit-converter/index.ts
 export const unitTestsConversionSchema = z.object({

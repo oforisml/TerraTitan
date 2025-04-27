@@ -1,5 +1,6 @@
 import { Mastra } from '@mastra/core';
-import { DefaultStorage } from '@mastra/core/storage/libsql';
+import { createLogger } from '@mastra/core/logger';
+import { LibSQLStore } from '@mastra/libsql';
 
 // import workflows
 import { conversionWorkflow } from './workflows/conversion.js';
@@ -8,7 +9,7 @@ import { unitConversionWorkflow } from './workflows/poc-unit-convert.js';
 import { parentWorkflow } from './workflows/poc-dynamic.js';
 import { cdktfRefWorkflow } from './workflows/poc-cdktf-ref.js';
 import { upstreamWorkflow } from './workflows/poc-ensure-upstream.js';
-import { vNextWorkflow } from './workflows/vnext.js';
+import { vNextConversionWorkflow } from './workflows/vnext.js';
 import { batchConversionWorkflow } from './workflows/poc-batch-source-convert.js';
 import { batchTestConversionWorkflow } from './workflows/poc-batch-test-convert.js';
 // import { sourceConverter } from './agents/source-converter/index.js';
@@ -17,11 +18,21 @@ export const mastra: Mastra = new Mastra({
   // TODO: sourceConverter should extend Agent?
   // agents: { sourceConverter },
   // ensure storage config for suspend/resume workflows
-  storage: new DefaultStorage({
-    config: {
-      url: 'file:.mastra/mastra.db',
-    },
+  storage: new LibSQLStore({
+    url: 'file:.mastra/mastra.db',
   }),
+  logger: createLogger({
+    name: 'Mastra',
+    level: 'info',
+  }),
+  telemetry: {
+    serviceName: 'terratitan-cli',
+    enabled: true,
+    export: {
+      type: 'otlp',
+      protocol: 'http',
+    },
+  },
   workflows: {
     conversionWorkflow,
     // PoC workflows
@@ -34,6 +45,6 @@ export const mastra: Mastra = new Mastra({
     batchTestConversionWorkflow,
   },
   vnext_workflows: {
-    vNextWorkflow,
+    vNextConversionWorkflow,
   },
 });
