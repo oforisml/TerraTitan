@@ -1,11 +1,17 @@
+import fs from 'node:fs';
 import groupCheckbox from 'inquire-grouped-checkbox';
 import { mastra } from './mastra/index.js';
 import { reviewPayloadSchema as cdktfRefReviewPayloadSchema } from './mastra/workflows/steps/batch-cdktf-ref-rag.js';
-import { reviewCdktfRefsStep, type InitType } from './mastra/workflows/vnext.js';
+import {
+  InitType,
+  reviewCdktfRefsStep, // Need the step object for resume schema access if needed
+  CdktfRefReviewResumeType,
+} from './mastra/workflows/vnext.js';
 import { CommandLineArgs, getConversionInputs } from './cli-util.js';
 
 export async function runvNextWf(args?: CommandLineArgs) {
   const { moduleName, workspaceId, outputModule } = await getConversionInputs(args);
+  const logger = mastra.getLogger();
   // init the workflow
   const inputData: InitType = {
     upstreamModule: {
@@ -18,42 +24,69 @@ export async function runvNextWf(args?: CommandLineArgs) {
     outputModule,
   };
 
-  const run = mastra.vnext_getWorkflow('vNextWorkflow').createRun();
+  const run = mastra.vnext_getWorkflow('vNextConversionWorkflow').createRun();
+  const reviewStepId = reviewCdktfRefsStep.id; // Use the ID from the step object
 
   // Add a watcher to monitor execution
-  run.watch(event => {
-    // if (event.payload.currentStep.id === 'find-upstream-input-refs.review-cdktf-refs') {
-    console.log(`Event: Step ${event.payload.currentStep.id} - ${event.payload.currentStep.status}`);
-    // if (event.payload.currentStep.status === 'failed') {
-    console.log('  Output:', event.payload.currentStep.output);
-    console.log('  Payload:', event.payload.currentStep.payload);
-    // }
-    // }
+  run.watch(async event => {
+    // Check if the specific review step is suspended in the overall workflow state
+    const reviewStepState = event.payload.workflowState.steps[reviewStepId];
+
+    if (reviewStepState?.status === 'suspended') {
+      logger.info(`Workflow suspended, waiting for review on step: ${reviewStepId}`);
+      try {
+        // 5. Extract and parse the suspend payload
+        // vNext stores the suspend payload passed to `suspend()` in the step state's 'payload' field
+        const suspendPayload = reviewStepState.payload;
+        const { groupedChoices, message } = cdktfRefReviewPayloadSchema.parse(suspendPayload);
+
+        // 6. Human review
+        console.log('\n===================================');
+        console.log(message);
+        console.log('===================================\n');
+        const selectedReferences = await groupCheckbox({
+          message: 'Select relevant CDKTF references',
+          choices: groupedChoices,
+          loop: false,
+          required: true, // Ensure the user makes a selection
+        });
+
+        // 7. Prepare resumeData matching the step's resumeSchema
+        const resumeData: CdktfRefReviewResumeType = { selectedReferences };
+
+        // 8. Resume the workflow
+        logger.info(`Resuming workflow step ${reviewStepId}...`);
+        const resumeResult = await run.resume({
+          step: reviewStepId, // Provide the step ID (or the step object itself)
+          resumeData, // Provide data matching resumeSchema
+        });
+
+        // 9. Handle resume outcome (optional logging/caching)
+        // The resumeResult reflects the FINAL outcome after resuming
+        if (resumeResult.status === 'success' && resumeResult.steps[reviewStepId]?.status === 'success') {
+          logger.info('Workflow resumed and completed successfully.');
+          // Access the output of the specific step *after* it completed post-resume
+          const finalReviewStepOutput = resumeResult.steps[reviewStepId]?.output;
+          if (finalReviewStepOutput) {
+            const filePath = `cache-${moduleName}-vnext.json`;
+            fs.writeFileSync(filePath, JSON.stringify(finalReviewStepOutput, null, 2));
+            logger.info(`Review step output cached to ${filePath}`);
+          }
+          // You can also access the final workflow result: resumeResult.result
+          console.log('Final Workflow Result (Files Written):', resumeResult.result);
+        } else if (resumeResult.status === 'failed') {
+          logger.error('Workflow failed after resuming.', resumeResult.error);
+        } else if (resumeResult.status === 'suspended') {
+          // Should not happen immediately after resuming unless *another* step suspends
+          logger.warn('Workflow suspended again after resuming...');
+        }
+      } catch (error) {
+        logger.error(`Error during review/resume for step ${reviewStepId}: ${error}`);
+      }
+    }
   });
 
-  const runResult = await run.start({
+  await run.start({
     inputData,
   });
-
-  const reviewCdktfRefsStepRun = runResult.steps.reviewCdktfRefsStep;
-  if (reviewCdktfRefsStepRun?.status === 'suspended') {
-    const { groupedChoices, message } = cdktfRefReviewPayloadSchema.parse(reviewCdktfRefsStepRun.payload);
-    console.log('\n===================================');
-    console.log(message);
-    console.log('===================================\n');
-    const selectedReferences = await groupCheckbox({
-      message: 'Select relevant CDKTF references',
-      choices: groupedChoices,
-      loop: false,
-      required: true,
-    });
-    // After getting user input
-    const resumeResult = await run.resume({
-      step: reviewCdktfRefsStep,
-      resumeData: selectedReferences,
-    });
-    console.log('Resume output:', JSON.stringify(resumeResult.result, null, 2));
-  }
-
-  console.log('Final output:', JSON.stringify(runResult.result, null, 2));
 }

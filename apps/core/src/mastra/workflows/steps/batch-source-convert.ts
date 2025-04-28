@@ -10,14 +10,14 @@ const tsAwsDocs = path.join(gitRoot, 'data', 'reference', 'docs', 'typescript', 
 const mergedAwsDocs = path.join(gitRoot, 'data', 'reference', 'merged', 'provider-aws');
 
 // TODO: Use zod schemas in mastra/agents/source-converter/index.ts
-const sourceConversionSchema = z.object({
+export const sourceConversionRequestSchema = z.object({
   inputFile: z.string(),
   inputRefFiles: z.array(z.string()),
   outputRefFiles: z.array(z.string()),
   // outputPath: z.string().optional(),
 });
 
-export const batchConvertSourceCodeOutputRequestsSchema = z.array(sourceConversionSchema);
+export const batchConvertSourceCodeRequestsOutputSchema = z.array(sourceConversionRequestSchema);
 
 // Example:
 // sourceCodeConversions: [
@@ -44,9 +44,9 @@ export const batchConvertSourceCodeOutputRequestsSchema = z.array(sourceConversi
 export async function batchConvertSourceCodeRequests(
   input: z.infer<typeof batchRetrieveCdktfRefsOutputSchema>,
   // outputModule: string,
-): Promise<z.infer<typeof batchConvertSourceCodeOutputRequestsSchema>> {
+): Promise<z.infer<typeof batchConvertSourceCodeRequestsOutputSchema>> {
   const require = createRequire(import.meta.url);
-  const batchConvertRequests: z.infer<typeof batchConvertSourceCodeOutputRequestsSchema> = [];
+  const batchConvertRequests: z.infer<typeof batchConvertSourceCodeRequestsOutputSchema> = [];
   for (const inputFile of input) {
     const mergedDocsFiles: string[] = [];
     // Merge declaration and Markdown docs

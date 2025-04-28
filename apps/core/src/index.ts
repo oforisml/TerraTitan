@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { argumentParser } from 'zodcli';
 import { commandLineArgsSchema, awsCdkModules, listWorkflowRuns } from './cli-util.js';
 import { runConversionWorkflow } from './wf-conversion.js';
+import { runvNextWf } from './wf-vnext.js';
 import { runCdktfRefWf } from './wf-cdktf-ref.js';
 import { runEnsureUpstreamWf } from './wf-ensure-upstream.js';
 import { runBatchSourceConvertWf } from './wf-batch-source-convert.js';
@@ -33,7 +34,7 @@ const workflowTypeSchema = z.enum([
    */
   'ensureUpstream',
   // 'convert-dynamic',
-  // 'convert-vNext',
+  'convert-vNext',
 ]);
 async function main() {
   console.log('>>>TerraTitan CLI - PoC<<<');
@@ -59,6 +60,7 @@ async function main() {
         message: 'Select which workflow to run:',
         choices: [
           { value: 'convert', name: 'Conversion Workflow' },
+          { value: 'convert-vNext', name: 'Conversion Workflow vNext' },
           { value: 'batchConvert', name: 'Demo Batch Source Code Conversion Workflow' },
           { value: 'batchTestConvert', name: 'Demo Batch Unit Tests Conversion Workflow' },
           { value: 'cdktfRef', name: 'Demo aws-elasticloadbalancingv2.CfnTargetGroup CDKTF Reference retrieval' },
@@ -87,9 +89,9 @@ async function main() {
       // case 'convert-dynamic':
       //   await runDynamicWf(args);
       //   break;
-      // case 'convert-vNext':
-      //   await runvNextWf(args);
-      //   break;
+      case 'convert-vNext':
+        await runvNextWf(args);
+        break;
       default:
         console.log('Invalid workflow selected.');
         break;

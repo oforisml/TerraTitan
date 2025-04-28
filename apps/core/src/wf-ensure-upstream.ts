@@ -4,6 +4,7 @@ import { CommandLineArgs, awsCdkModules } from './cli-util.js';
 
 export async function runEnsureUpstreamWf(args?: CommandLineArgs) {
   const wf = mastra.getWorkflow('upstreamWorkflow');
+  const logger = mastra.getLogger();
   const run = wf.createRun();
   const moduleName =
     args?.module ||
@@ -25,9 +26,9 @@ export async function runEnsureUpstreamWf(args?: CommandLineArgs) {
       },
     }));
   const triggerData = { moduleName };
-  console.log('Running Ensure Upstream workflow...');
-  console.log('Trigger data:', JSON.stringify(triggerData, null, 2));
+  logger.info('Running Ensure Upstream workflow...');
+  logger.info(`Trigger data: ${JSON.stringify(triggerData, null, 2)}`);
   const result = await run.start({ triggerData });
-  console.log('Final output:', JSON.stringify(result.results, null, 2));
+  logger.info(`Final output: ${JSON.stringify(result.results, null, 2)}`);
   return result;
 }

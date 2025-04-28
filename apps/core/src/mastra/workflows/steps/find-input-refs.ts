@@ -113,7 +113,7 @@ export async function findSrcInputRefs(
   upstreamDetails: z.infer<typeof ensureUpstreamOutputSchema>,
 ): Promise<z.infer<typeof findSrcInputRefsOutputSchema>> {
   const require = createRequire(import.meta.url);
-  const srcDir = path.join(upstreamDetails.upstreamDir, 'src');
+  const srcDir = path.join(upstreamDetails.upstreamDir, 'lib');
 
   const inputFiles: z.infer<typeof srcInputSchema>[] = [];
   const rawFiles: string[] = [];
