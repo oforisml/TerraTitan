@@ -20,7 +20,7 @@ export const mastra: Mastra = new Mastra({
   // agents: { sourceConverter },
   // ensure storage config for suspend/resume workflows
   storage: new LibSQLStore({
-    url: 'file:.mastra/mastra.db',
+    url: 'file:./mastra.db',
   }),
   logger: createLogger({
     name: 'Mastra',
