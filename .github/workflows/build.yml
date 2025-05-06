@@ -30,7 +30,6 @@ jobs:
 
       - name: Run Test and build
         run: |
-          # hack: make sure the dependencies are built
-          pnpm run build
           pnpm run test
           pnpm run check-types
+          pnpm run build
