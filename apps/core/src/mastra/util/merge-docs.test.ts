@@ -1,6 +1,7 @@
 import path from 'path';
-import { expect, test, describe } from 'vitest';
+import { expect, test, describe, vi } from 'vitest';
 import { MergeDocs } from './merge-docs.js';
+import * as mergeAgentModule from '../agents/docs-merger/index.js'; // Adjust path if needed
 
 /**
  * TempConfig
@@ -149,6 +150,36 @@ describe('MergeDocs', () => {
         declarationPath: path.join(fixturesDir, 'declarations', 'ami', 'index.d.ts'),
       });
       expect(mergeDocs.process().fullText).toMatchSnapshot();
+    });
+  });
+
+  describe('MergeDocs.llmProcess Unit Tests', () => {
+    const declaration = `
+      export interface TempConfig {
+        foo: string;
+        bar?: string;
+      }
+      `;
+    const markdown = `
+          ## Argument Reference
+
+          * \`foo\` - (Required) Foo description.
+          * \`bar\` - (Optional) Bar description.
+          `;
+    test('should update JSDoc using LLM agent', async () => {
+      // Mock MergeAgent
+      vi.spyOn(mergeAgentModule, 'MergeAgent').mockImplementation(() => ({
+        labelProperties: async () => [
+          { name: 'foo', description: '(Required) Foo description.' },
+          { name: 'bar', description: '(Optional) Bar description.' },
+        ],
+      }));
+
+      const mergeDocs = MergeDocs.fromContent(declaration, markdown);
+      await mergeDocs.llmProcess();
+
+      expect(mergeDocs.fullText).toContain('/** (Required) Foo description. */');
+      expect(mergeDocs.fullText).toContain('/** (Optional) Bar description. */');
     });
   });
 });

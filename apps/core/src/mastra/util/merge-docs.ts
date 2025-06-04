@@ -10,6 +10,8 @@ import {
 } from 'ts-morph';
 import { type MergeDocsRequestProps } from './types.js';
 import { kebabToTitleCase } from './helpers.js';
+import { label } from 'mastra';
+import { MergeAgent } from '../agents/docs-merger/index.js';
 
 // only available when merge-docs script has been ran
 // const mergedAwsDocs = path.join(gitRoot, 'data', 'reference', 'merged', 'provider-aws');
@@ -69,6 +71,56 @@ export class MergeDocs {
     private readonly sourceFile: SourceFile,
     private readonly markdownContent: string,
   ) {}
+
+  /**
+   * Process the markdown file and update the declaration file using LLM
+   * This method uses Mastra to label the properties based on the markdown content
+   */
+
+  public async llmProcess(): Promise<MergeDocs> {
+    const resourceType = path.basename(path.dirname(this.declarationPath));
+    const configInterfaceName = `${kebabToTitleCase(resourceType)}Config`;
+    const interfaces = this.sourceFile.getInterfaces();
+    const configInterface = interfaces.find(intf => intf.getName() === configInterfaceName);
+
+    if (!configInterface) {
+      console.warn(`No ${configInterfaceName} interface found in ${this.declarationPath}`);
+      return this;
+    }
+
+    const properties = configInterface.getProperties();
+    if (properties.length === 0) {
+      console.warn(`No properties found in interface ${configInterfaceName}`);
+      return this;
+    }
+
+    const inputData = properties.map(prop => ({
+      name: prop.getName(),
+      existingDoc: prop.getJsDocs()?.[0]?.getText() || '',
+    }));
+
+    const agent = new MergeAgent();
+    const labeled = await agent.labelProperties({
+      properties: inputData,
+      markdownContent: this.markdownContent,
+    });
+
+    if (labeled.length !== properties.length) {
+      console.warn(`Mismatch between labeled docs and properties in ${configInterfaceName}`);
+    }
+
+    for (let i = 0; i < properties.length; i++) {
+      const prop = properties[i];
+      const description = labeled[i]?.description;
+
+      if (!description) continue;
+
+      prop.getJsDocs().forEach(jsDoc => jsDoc.remove());
+      prop.addJsDoc({ description });
+    }
+
+    return this;
+  }
 
   /**
    * Process the markdown file and update the declaration file
